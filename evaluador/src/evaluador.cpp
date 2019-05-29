@@ -14,7 +14,7 @@
 using namespace std;
 
 int
-initMemSem(void) {
+initMemoriaCompartidaSem(void) {
 
   cout << "lol" << endl;
   sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, N_BUFFER);
@@ -56,7 +56,7 @@ initMemSem(void) {
 }
 
 int
-productor(void) {
+crearSemaforoProductor(void) {
 
   sem_t *vacios, *llenos, *mutex;
 
@@ -105,7 +105,7 @@ productor(void) {
 
 
 int
-consumidor(void) {
+crearSemaforoConsumidor(void) {
 
   sem_t *vacios, *llenos, *mutex;
 
@@ -151,7 +151,7 @@ consumidor(void) {
 }
 
 int
-delMemSem(void) {
+deleteMemoriaCOmpartida(void) {
 
   sem_unlink("vacios");
   sem_unlink("llenos");
@@ -161,17 +161,28 @@ delMemSem(void) {
   return EXIT_SUCCESS;
 }
 
-//ESTE SERA EL EVALUADOR
+static void usage (const char* progname){
+  cerr << "Usage: " << progname
+       << " init [-i <integer>] [-ie <integer>] [-oe <integer>]\n\t\t\t[-n <string>] [-b <integer>] [-d <integer>]\n\t\t\t[-ee <integer>] [-s <integer>] [-q <integer>]"
+       << "\n\n\t\t| reg [-n <string>] {{<filename>} ... | -}"
+       << "\n\t\t| ctrl [-s <string>]"
+       << "\n\t\t| rep [-s <string>] {-i <integer> | -m <integer>}"
+       << endl;
+       exit(EXIT_FAILURE);
+}
 
 int
 main(int argc , char* argv[]){
+
+    if(argc != 2) usage(argv[0]);
+    
     std::string arg1(argv[1]);
     if (arg1 == "init"){ 
         cout << "entro" << endl;
-        initMemSem();
+        initMemoriaCompartidaSem();
     }
-     if (arg1 == "delete"){ 
-        delMemSem();
+    if (arg1 == "delete"){ 
+        deleteMemoriaCOmpartida();
     }
     return EXIT_SUCCESS;
 }
