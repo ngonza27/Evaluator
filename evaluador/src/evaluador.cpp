@@ -161,6 +161,23 @@ deleteMemoriaCOmpartida(void) {
   return EXIT_SUCCESS;
 }
 
+//init
+int iniciarSistema(){}
+
+//reg
+int registrarExamenes(){}
+
+//ctrl
+int revisarSistema(){
+  //modo interactivo:
+  // while (el usuario ingrese list o update, espere)
+  // >list [ processing | waiting | reported | reactive | all]
+  // >update { B|D|S } <integer>
+}
+
+//rep
+int reportarResultados(){}
+
 static void usage (const char* progname){
   cerr << "Usage: " << progname
        << " init [-i <integer>] [-ie <integer>] [-oe <integer>]\n\t\t\t[-n <string>] [-b <integer>] [-d <integer>]\n\t\t\t[-ee <integer>] [-s <integer>] [-q <integer>]"
