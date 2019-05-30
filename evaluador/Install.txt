@@ -1,0 +1,1 @@
+Para instalar en un directorio distinto al local.

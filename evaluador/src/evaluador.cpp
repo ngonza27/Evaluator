@@ -10,8 +10,30 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <pthread.h>
 
 using namespace std;
+
+//-b
+int B = 100; //blood reactive
+//-d
+int D = 100; //detritus reactive
+//-s
+int S = 100; //skin reactive
+
+string nomMemoria = "";
+ 
+//-i
+int numeroEntradas = 5; // = # de hilos de entrada 
+//-oe
+int numeroSalidas = 10;
+//-n
+string nombreMemoriaCompartida = "evaluator";
+//-q
+int tamanoColasInternas = 6; //tamano colas internas
+
+
+//BUFFER compartido = cola de entrada
 
 int
 initMemoriaCompartidaEntrada(void) {
@@ -152,19 +174,80 @@ crearSemaforoConsumidor(void) {
 
 int
 deleteMemoriaCOmpartida(void) {
-
   sem_unlink("vacios");
   sem_unlink("llenos");
   sem_unlink("mutex");
   shm_unlink("/buffer");
-
   return EXIT_SUCCESS;
 }
+
+void *rutinaAejecutar(void * hola){}
+
+void hilos(int n){
+ pthread_t threads[n];
+   int rc;
+   int i;
+   
+   for( i = 0; i < n; i++ ) {
+      cout << "main() : creating thread, " << i << endl;
+      rc = pthread_create(&threads[i], NULL, rutinaAejecutar, NULL);
+      
+      if (rc) {
+         cout << "Error:unable to create thread," << rc << endl;
+         exit(-1);
+      }
+   }
+   pthread_exit(NULL);}
 
 //init
 int iniciarSistema(){
   //-i
-  int numeroEntradas = 5;
+  int numeroEntradas = 5; // = # de hilos de entrada 
+  //-oe
+  int numeroSalidas = 10;
+  //-n
+  string nombreMemoriaCompartida = "evaluator";
+  
+  //tamaño de las colas internas?
+  //hilos proceso de muestra = # de tipos de muestra, max = 3
+  
+  sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
+  sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
+  sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
+
+  int fd = shm_open("buffer", O_RDWR | O_CREAT | O_EXCL, 0660);
+
+  hilos(numeroEntradas);
+  
+  if (fd < 0) {
+    cerr << "Error creando la memoria compartida: "
+	       << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  if (ftruncate(fd, sizeof(struct Buffer)) != 0) {
+    cerr << "Error creando la memoria compartida: "
+	       << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  void *dir;
+  if ((dir = mmap(NULL, sizeof(struct elemento), PROT_READ | PROT_WRITE, MAP_SHARED,
+		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  struct Buffer *pBuffer = (struct Buffer *) dir;
+  pBuffer->entra = 5;
+  pBuffer->sale = 10;
+  pBuffer->cantidad = 0;
+  pBuffer->tamano = tamanoBufferEntrada;
+
+  close(fd);
+
+  return EXIT_SUCCESS;
 }
 
 //reg
@@ -172,6 +255,7 @@ int registrarExamenes(){}
 
 //ctrl
 int revisarSistema(){
+  cout << nomMemoria << endl;
   //string listMode;
   //modo interactivo:
   // while (el usuario ingrese list o update, espere)
@@ -181,7 +265,11 @@ int revisarSistema(){
 }
 
 //rep
-int reportarResultados(){}
+int reportarResultados(){
+  //liberar el reporte
+  //shm ó sem unlink?
+}
+
 
 static void usage (const char* progname){
   cerr << "Usage: " << progname
@@ -195,7 +283,6 @@ static void usage (const char* progname){
 
 int
 main(int argc , char* argv[]){
-
     if(argc < 2){
       cout << "Please use one of the following commands:"<< endl;
       usage(argv[0]);
@@ -203,7 +290,7 @@ main(int argc , char* argv[]){
 
     std::string arg1(argv[1]);
     if (arg1 == "init"){
-        //initMemoriaCompartidaSem();
+        //initMemoriaCompartidaEntrada();
     }
     if (arg1 == "reg"){ 
         //deleteMemoriaCOmpartida();

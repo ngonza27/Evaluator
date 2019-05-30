@@ -1,5 +1,6 @@
 #pragma once
 
+//-ie
 #define tamanoBufferEntrada 6
 
 struct elemento {
