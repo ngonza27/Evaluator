@@ -1,7 +1,7 @@
 #pragma once
 
-#define N_BUFFER 10
-int lol();
+#define tamanoBufferEntrada 6
+
 struct elemento {
   int elemento;
 };
@@ -11,5 +11,5 @@ struct Buffer {
   int sale;
   int cantidad;
   int tamano;
-  struct elemento buffer[N_BUFFER];
+  struct elemento buffer[tamanoBufferEntrada];
 };

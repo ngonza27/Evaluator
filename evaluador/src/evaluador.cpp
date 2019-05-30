@@ -14,10 +14,9 @@
 using namespace std;
 
 int
-initMemoriaCompartidaSem(void) {
-
+initMemoriaCompartidaEntrada(void) {
   cout << "lol" << endl;
-  sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, N_BUFFER);
+  sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
   sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
   sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
 
@@ -25,13 +24,13 @@ initMemoriaCompartidaSem(void) {
 
   if (fd < 0) {
     cerr << "Error creando la memoria compartida: "
-	 << errno << strerror(errno) << endl;
+	       << errno << strerror(errno) << endl;
     exit(1);
   }
 
   if (ftruncate(fd, sizeof(struct Buffer)) != 0) {
     cerr << "Error creando la memoria compartida: "
-	 << errno << strerror(errno) << endl;
+	       << errno << strerror(errno) << endl;
     exit(1);
   }
 
@@ -45,15 +44,16 @@ initMemoriaCompartidaSem(void) {
   }
 
   struct Buffer *pBuffer = (struct Buffer *) dir;
-  pBuffer->entra = 0;
-  pBuffer->sale = 0;
+  pBuffer->entra = 5;
+  pBuffer->sale = 10;
   pBuffer->cantidad = 0;
-  pBuffer->tamano = N_BUFFER;
+  pBuffer->tamano = tamanoBufferEntrada;
 
   close(fd);
 
   return EXIT_SUCCESS;
 }
+
 
 int
 crearSemaforoProductor(void) {
@@ -162,17 +162,22 @@ deleteMemoriaCOmpartida(void) {
 }
 
 //init
-int iniciarSistema(){}
+int iniciarSistema(){
+  //-i
+  int numeroEntradas = 5;
+}
 
 //reg
 int registrarExamenes(){}
 
 //ctrl
 int revisarSistema(){
+  //string listMode;
   //modo interactivo:
   // while (el usuario ingrese list o update, espere)
   // >list [ processing | waiting | reported | reactive | all]
   // >update { B|D|S } <integer>
+  //cin >> listMode; 
 }
 
 //rep
@@ -191,15 +196,35 @@ static void usage (const char* progname){
 int
 main(int argc , char* argv[]){
 
-    if(argc != 2) usage(argv[0]);
-    
-    std::string arg1(argv[1]);
-    if (arg1 == "init"){ 
-        cout << "entro" << endl;
-        initMemoriaCompartidaSem();
+    if(argc < 2){
+      cout << "Please use one of the following commands:"<< endl;
+      usage(argv[0]);
     }
-    if (arg1 == "delete"){ 
-        deleteMemoriaCOmpartida();
+
+    std::string arg1(argv[1]);
+    if (arg1 == "init"){
+        //initMemoriaCompartidaSem();
+    }
+    if (arg1 == "reg"){ 
+        //deleteMemoriaCOmpartida();
+    }
+    if (arg1 == "ctrl"){
+        //revisarSistema();
+        string command;
+          cout << "> ";
+          cin >> command;
+          if(command[0] == 'l'){
+            cout << "list mode " << command[0] << endl;
+          } else {
+            cout << "update mode " << command[0] << endl;  
+          }
+    }
+    if (arg1 == "rep"){
+      if(argc != 6){ 
+          cout << "rep - Number of arguments not met" << endl;
+          usage(argv[0]);
+      }
+      //reportarResultados();
     }
     return EXIT_SUCCESS;
 }
