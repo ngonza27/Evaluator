@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pthread.h>
+#include <sstream>
 
 using namespace std;
 
@@ -293,11 +294,36 @@ main(int argc , char* argv[]){
     if (arg1 == "init"){
         //initMemoriaCompartidaEntrada();
     }
-    if (arg1 == "reg"){ 
-        //deleteMemoriaCOmpartida();
+    if(arg1 == "reg"){
+        // ./evaluator reg [-n <string>] {{filename}... | - }
+ 
+        // (lista de ficheros) ->{filename}...
+        // - modo interactivo
+        //(nombre memoria compartida) -> [-n <string>]
+
         //tambien tiene modo interactivo: <integer> {b|d|s} <integer>
         //retorna un identificador
-    }
+
+        //MODO INTERACTIVO:
+        string linea;
+        string arr[3];
+        string cola,tipo,cantidad;
+        int i = 0; //CON ESTE i PUEDO GENERAR EL IDENTIFICADOR
+        while(getline(cin,linea)){
+          stringstream ssin(linea);
+          while (ssin.good() && i < 3){
+              ssin >> arr[i];
+              ++i;
+          }
+          cola = arr[0];
+          tipo = arr[1];
+          cantidad = arr[2];
+          //cout << "cola:" << cola << endl;
+          //cout << "tipo:" << tipo << endl;
+          //cout << "cantidad:" << cantidad << endl;
+        }
+      }
+    
     if (arg1 == "ctrl"){
         //revisarSistema();
         string command;
