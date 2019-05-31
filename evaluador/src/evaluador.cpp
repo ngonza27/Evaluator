@@ -21,8 +21,6 @@ int D = 100; //detritus reactive
 //-s
 int S = 100; //skin reactive
 
-string nomMemoria = "";
- 
 //-i
 int numeroEntradas = 5; // = # de hilos de entrada 
 //-oe
@@ -181,7 +179,9 @@ deleteMemoriaCOmpartida(void) {
   return EXIT_SUCCESS;
 }
 
-void *rutinaAejecutar(void * hola){}
+void *rutinaAejecutar(void * hola){
+  printf("hilo creado");
+}
 
 void hilos(int n){
  pthread_t threads[n];
@@ -191,13 +191,15 @@ void hilos(int n){
    for( i = 0; i < n; i++ ) {
       cout << "main() : creating thread, " << i << endl;
       rc = pthread_create(&threads[i], NULL, rutinaAejecutar, NULL);
+      pthread_join(threads[i], NULL);//Espera a que el hilo creado termine de ejecutar.
       
       if (rc) {
          cout << "Error:unable to create thread," << rc << endl;
          exit(-1);
       }
    }
-   pthread_exit(NULL);}
+   pthread_exit(NULL);
+}
 
 //init
 int iniciarSistema(){
@@ -255,8 +257,7 @@ int registrarExamenes(){}
 
 //ctrl
 int revisarSistema(){
-  cout << nomMemoria << endl;
-  //string listMode;
+  //string listMod
   //modo interactivo:
   // while (el usuario ingrese list o update, espere)
   // >list [ processing | waiting | reported | reactive | all]
@@ -294,6 +295,8 @@ main(int argc , char* argv[]){
     }
     if (arg1 == "reg"){ 
         //deleteMemoriaCOmpartida();
+        //tambien tiene modo interactivo: <integer> {b|d|s} <integer>
+        //retorna un identificador
     }
     if (arg1 == "ctrl"){
         //revisarSistema();
@@ -312,6 +315,9 @@ main(int argc , char* argv[]){
           usage(argv[0]);
       }
       //reportarResultados();
+    }
+    if (arg1 == "stop"){
+      //deleteMemoriaCOmpartida();
     }
     return EXIT_SUCCESS;
 }
