@@ -34,6 +34,10 @@ int tamanoColasInternas = 6; //tamano colas internas
 
 //BUFFER compartido = cola de entrada
 
+void procesosRegistro (){
+
+}
+
 int
 initMemoriaCompartidaEntrada(void) {
   cout << "lol" << endl;
@@ -171,20 +175,7 @@ crearSemaforoConsumidor(void) {
   return EXIT_SUCCESS;
 }
 
-int
-deleteMemoriaCOmpartida(void) {
-  sem_unlink("vacios");
-  sem_unlink("llenos");
-  sem_unlink("mutex");
-  shm_unlink("/buffer");
-  return EXIT_SUCCESS;
-}
-
-void *rutinaAejecutar(void * hola){
-  printf("hilo creado");
-}
-
-void hilos(int n){
+void hilosMultiples(int n){
  pthread_t threads[n];
    int rc;
    int i;
@@ -201,6 +192,27 @@ void hilos(int n){
    }
    pthread_exit(NULL);
 }
+
+void *rutinaAejecutar(void * hola){
+  printf("hilo creado");
+}
+
+void hilosInternos (){
+  pthread_t interno1, interno2, interno3;
+  pthread_create(&interno1, NULL, rutinaAejecutar2,NULL);
+  pthread_create(&interno2, NULL, rutinaAejecutar2,NULL);
+  pthread_create(&interno3, NULL, rutinaAejecutar2,NULL);
+  
+  pthread_join(interno1, NULL);
+  pthread_join(interno2, NULL);
+  pthread_join(interno3, NULL);
+}
+
+void *rutinaAejecutar2(void * hola){
+  printf("hilo creado");
+}
+
+void procesoReportador(){ }
 
 //init
 int iniciarSistema(){
@@ -220,7 +232,7 @@ int iniciarSistema(){
 
   int fd = shm_open("buffer", O_RDWR | O_CREAT | O_EXCL, 0660);
 
-  hilos(numeroEntradas);
+  hilosMultiples(numeroEntradas);
   
   if (fd < 0) {
     cerr << "Error creando la memoria compartida: "
@@ -272,6 +284,14 @@ int reportarResultados(){
   //shm ó sem unlink?
 }
 
+int
+deleteMemoriaCOmpartida(void) {
+  sem_unlink("vacios");
+  sem_unlink("llenos");
+  sem_unlink("mutex");
+  shm_unlink("/buffer");
+  return EXIT_SUCCESS;
+}
 
 static void usage (const char* progname){
   cerr << "Usage: " << progname
