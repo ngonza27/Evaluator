@@ -15,28 +15,9 @@
 
 using namespace std;
 
-//-b
-int B = 100; //blood reactive
-//-d
-int D = 100; //detritus reactive
-//-s
-int S = 100; //skin reactive
-
-//-i
-int numeroEntradas = 5; // = # de hilos de entrada 
-//-oe
-int numeroSalidas = 10;
-//-n
-string nombreMemoriaCompartida = "evaluator";
-//-q
-int tamanoColasInternas = 6; //tamano colas internas
-
-
 //BUFFER compartido = cola de entrada
 
-void procesosRegistro (){
-
-}
+void procesosRegistro (){ }
 
 int
 initMemoriaCompartidaEntrada(void) {
@@ -61,6 +42,7 @@ initMemoriaCompartidaEntrada(void) {
 
   void *dir;
 
+  //aca se hace el mapeo de las bandejas
   if ((dir = mmap(NULL, sizeof(struct elemento), PROT_READ | PROT_WRITE, MAP_SHARED,
 		  fd, 0)) == MAP_FAILED) {
     cerr << "Error mapeando la memoria compartida: "
@@ -155,6 +137,7 @@ crearSemaforoConsumidor(void) {
     exit(1);
   }
 
+  
   struct Buffer *pBuffer = (struct Buffer *) dir;
   int item = 0;
 
@@ -216,14 +199,7 @@ void procesoReportador(){ }
 
 //init
 int iniciarSistema(){
-  //-i
-  int numeroEntradas = 5; // = # de hilos de entrada 
-  //-oe
-  int numeroSalidas = 10;
-  //-n
-  string nombreMemoriaCompartida = "evaluator";
-  
-  //tamaño de las colas internas?
+
   //hilos proceso de muestra = # de tipos de muestra, max = 3
   
   sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
@@ -232,7 +208,7 @@ int iniciarSistema(){
 
   int fd = shm_open("buffer", O_RDWR | O_CREAT | O_EXCL, 0660);
 
-  hilosMultiples(numeroEntradas);
+  hilosMultiples(entradasEntra);
   
   if (fd < 0) {
     cerr << "Error creando la memoria compartida: "

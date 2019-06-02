@@ -1,7 +1,15 @@
 #pragma once
+#define tamanoBufferEntrada 99
 
-//-ie
-#define tamanoBufferEntrada 6
+
+#define entradasEntra 5 //-i
+#define tamanoColasExternas 6 //-ie
+#define entradasSalida 10 //-oe
+#define nombreMemoriaCompartida "evaluator" //-n
+#define B 100 //-b
+#define D 100 //-d
+#define S 100 //-s
+#define tamanoColasInternas 6 //-q
 
 struct elemento {
   int elemento;
@@ -13,4 +21,16 @@ struct Buffer {
   int cantidad;
   int tamano;
   struct elemento buffer[tamanoBufferEntrada];
+};
+
+struct BandejasEntrada{
+  int posicionesEntra[tamanoColasExternas];
+};
+
+struct BandejasInternas{
+  int tamanoInternas[tamanoColasInternas];
+};
+
+struct BandejaSalida{
+  int tamanoSalida[tamanoColasExternas];
 };
