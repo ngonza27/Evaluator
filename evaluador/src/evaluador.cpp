@@ -175,6 +175,14 @@ crearSemaforoConsumidor(void) {
   return EXIT_SUCCESS;
 }
 
+void *rutinaAejecutar2(void * hola){
+  printf("hilo creado");
+}
+
+void *rutinaAejecutar(void * hola){
+  printf("hilo creado");
+}
+
 void hilosMultiples(int n){
  pthread_t threads[n];
    int rc;
@@ -182,7 +190,7 @@ void hilosMultiples(int n){
    
    for( i = 0; i < n; i++ ) {
       cout << "main() : creating thread, " << i << endl;
-      rc = pthread_create(&threads[i], NULL, rutinaAejecutar, NULL);
+      rc = pthread_create(&threads[i], NULL, *rutinaAejecutar, NULL);
       pthread_join(threads[i], NULL);//Espera a que el hilo creado termine de ejecutar.
       
       if (rc) {
@@ -193,23 +201,15 @@ void hilosMultiples(int n){
    pthread_exit(NULL);
 }
 
-void *rutinaAejecutar(void * hola){
-  printf("hilo creado");
-}
-
 void hilosInternos (){
   pthread_t interno1, interno2, interno3;
-  pthread_create(&interno1, NULL, rutinaAejecutar2,NULL);
-  pthread_create(&interno2, NULL, rutinaAejecutar2,NULL);
-  pthread_create(&interno3, NULL, rutinaAejecutar2,NULL);
+  pthread_create(&interno1, NULL, *rutinaAejecutar2,NULL);
+  pthread_create(&interno2, NULL, *rutinaAejecutar2,NULL);
+  pthread_create(&interno3, NULL, *rutinaAejecutar2,NULL);
   
   pthread_join(interno1, NULL);
   pthread_join(interno2, NULL);
   pthread_join(interno3, NULL);
-}
-
-void *rutinaAejecutar2(void * hola){
-  printf("hilo creado");
 }
 
 void procesoReportador(){ }
