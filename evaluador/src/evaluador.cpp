@@ -15,18 +15,20 @@
 
 using namespace std;
 
+string nombreMemoriaCompartida = "evaluator"; //-n
 //BUFFER compartido = cola de entrada
-
+string memComp = "/"+nombreMemoriaCompartida;
 void procesosRegistro (){ }
 
 int
 initMemoriaCompartidaEntrada(void) {
   cout << "lol" << endl;
+  cout << memComp << endl;
   sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
   sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
   sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
 
-  int fd = shm_open("buffer", O_RDWR | O_CREAT | O_EXCL, 0660);
+  int fd = shm_open(memComp.c_str(), O_RDWR | O_CREAT | O_EXCL, 0660);
 
   if (fd < 0) {
     cerr << "Error creando la memoria compartida: "
@@ -262,10 +264,12 @@ int reportarResultados(){
 
 int
 deleteMemoriaCOmpartida(void) {
+  cout << "deleting !!" << endl;
+  cout << memComp << endl;
   sem_unlink("vacios");
   sem_unlink("llenos");
   sem_unlink("mutex");
-  shm_unlink("/buffer");
+  shm_unlink(memComp.c_str());
   return EXIT_SUCCESS;
 }
 
@@ -288,6 +292,14 @@ main(int argc , char* argv[]){
 
     std::string arg1(argv[1]);
     if (arg1 == "init"){
+        for(int i=1; i < argc; ++i){
+          if(std::string (argv[i]) == "-n"){
+            nombreMemoriaCompartida = argv[i+1];
+            memComp = "/"+nombreMemoriaCompartida;
+          }
+        }
+        cout << nombreMemoriaCompartida << endl;
+        cout <<"memcomop NUEVO: " <<memComp << endl;
         //initMemoriaCompartidaEntrada();
     }
     if(arg1 == "reg"){
@@ -339,7 +351,9 @@ main(int argc , char* argv[]){
       //reportarResultados();
     }
     if (arg1 == "stop"){
-      //deleteMemoriaCOmpartida();
+      //TODO: bug, so cambia el nombre de la memoria compartida a la hora de borrarlo
+      cout <<"memcomop NUEVO: " <<memComp << endl;
+      deleteMemoriaCOmpartida();
     }
     return EXIT_SUCCESS;
 }

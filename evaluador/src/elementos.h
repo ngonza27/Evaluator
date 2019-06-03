@@ -1,11 +1,9 @@
 #pragma once
 #define tamanoBufferEntrada 99
 
-
 #define entradasEntra 5 //-i
 #define tamanoColasExternas 6 //-ie
 #define entradasSalida 10 //-oe
-#define nombreMemoriaCompartida "evaluator" //-n
 #define B 100 //-b
 #define D 100 //-d
 #define S 100 //-s
