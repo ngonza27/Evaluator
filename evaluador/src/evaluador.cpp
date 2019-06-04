@@ -325,27 +325,25 @@ main(int argc , char* argv[]){
             }
             cola = arr[0];
             tipo = arr[1];
-            if(stoi(cantidad) > 5){
-              cerr << "Cantidad no valida" << endl;
-            }
+//          if(stoi(cantidad) > 5){
+  //          cerr << "Cantidad no valida" << endl;
+    //      }
             cantidad = arr[2];
+            cout << cantidad << endl;
             ++id;
             cout << "id:" << id << endl;
           }
         } else {
           ifstream infile(filename.c_str());
           ofstream outfile;
-          cout << filename.c_str() << endl;
           int j=0;
-          outfile.open("out.spl");
+          //Falta obtener varios ficheros
+          outfile.open("out.spl"); //falta obtener el nombre de cada fichero
           while (!infile.eof()){
               infile >> contenido[j];
-              cout << contenido[j] << endl;
               ++j;
               if (j%3 == 0){
-                cout <<"j:" << j << endl;
                 idFicheros = j;
-                cout << "fichero:" << idFicheros << endl;
                 outfile << "id:" << idFicheros/3 << '\n';
                 ++idFicheros;
               }
@@ -353,25 +351,31 @@ main(int argc , char* argv[]){
                             outfile.close();
 
         }
-        // ./evaluator reg [-n <string>] {{filename}... | - }
-
-        // (lista de ficheros) ->{filename}...
-        // - modo interactivo
         //(nombre memoria compartida) -> [-n <string>]
-
-        //tambien tiene modo interactivo: <integer> {b|d|s} <integer>
-        //retorna un identificador
-      }
+    }
     
     if (arg1 == "ctrl"){
+        //-n nombre memoria compartida
         //revisarSistema();
-        string command;
-          cout << "> ";
-          cin >> command;
-          if(command[0] == 'l'){
-            cout << "list mode " << command[0] << endl;
-          } else {
-            cout << "update mode " << command[0] << endl;  
+        string command[2];
+        string linea;
+        int i=0;
+        cout << "> " << endl;
+          while(getline(cin,linea)){
+            stringstream ssin(linea);
+            while (ssin.good()){
+                ssin >> command[i];
+                ++i;
+                cout << i << endl;
+            }
+            if(command[0] == "list"){
+              if(command[1] == "all"){
+                cout << "mostrando todo" << endl;
+                i=0;
+              }
+            } else {
+              cout << "update mode " << command[0] << endl;  
+            }
           }
     }
     if (arg1 == "rep"){
@@ -382,6 +386,7 @@ main(int argc , char* argv[]){
       //reportarResultados();
     }
     if (arg1 == "stop"){
+      // -n nombre de la memoria compartida
       //TODO: bug, so cambia el nombre de la memoria compartida a la hora de borrarlo
       cout <<"memcomop NUEVO: " <<memComp << endl;
       deleteMemoriaCOmpartida();
