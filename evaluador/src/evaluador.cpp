@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -303,33 +304,63 @@ main(int argc , char* argv[]){
         //initMemoriaCompartidaEntrada();
     }
     if(arg1 == "reg"){
+        int idFicheros;
+        string contenido[100];
+        if (argv[2] == NULL)
+            cout << "ERRRRRRRROR PS" << endl;
+        string filename = argv[2];
+        //cout << filename << endl;
+        //MODO INTERACTIVO:
+        if(std::string (argv[4]) == "-"){
+          int id=0;
+          string linea;
+          string arr[3];
+          string cola,tipo,cantidad;
+          int i = 0; //CON ESTE i PUEDO GENERAR EL IDENTIFICADOR
+          while(getline(cin,linea)){
+            stringstream ssin(linea);
+            while (ssin.good() && i < 3){
+                ssin >> arr[i];
+                ++i;
+            }
+            cola = arr[0];
+            tipo = arr[1];
+            if(stoi(cantidad) > 5){
+              cerr << "Cantidad no valida" << endl;
+            }
+            cantidad = arr[2];
+            ++id;
+            cout << "id:" << id << endl;
+          }
+        } else {
+          ifstream infile(filename.c_str());
+          ofstream outfile;
+          cout << filename.c_str() << endl;
+          int j=0;
+          outfile.open("out.spl");
+          while (!infile.eof()){
+              infile >> contenido[j];
+              cout << contenido[j] << endl;
+              ++j;
+              if (j%3 == 0){
+                cout <<"j:" << j << endl;
+                idFicheros = j;
+                cout << "fichero:" << idFicheros << endl;
+                outfile << "id:" << idFicheros/3 << '\n';
+                ++idFicheros;
+              }
+          }
+                            outfile.close();
+
+        }
         // ./evaluator reg [-n <string>] {{filename}... | - }
- 
+
         // (lista de ficheros) ->{filename}...
         // - modo interactivo
         //(nombre memoria compartida) -> [-n <string>]
 
         //tambien tiene modo interactivo: <integer> {b|d|s} <integer>
         //retorna un identificador
-
-        //MODO INTERACTIVO:
-        string linea;
-        string arr[3];
-        string cola,tipo,cantidad;
-        int i = 0; //CON ESTE i PUEDO GENERAR EL IDENTIFICADOR
-        while(getline(cin,linea)){
-          stringstream ssin(linea);
-          while (ssin.good() && i < 3){
-              ssin >> arr[i];
-              ++i;
-          }
-          cola = arr[0];
-          tipo = arr[1];
-          cantidad = arr[2];
-          //cout << "cola:" << cola << endl;
-          //cout << "tipo:" << tipo << endl;
-          //cout << "cantidad:" << cantidad << endl;
-        }
       }
     
     if (arg1 == "ctrl"){

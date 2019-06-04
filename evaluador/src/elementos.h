@@ -9,6 +9,7 @@
 #define S 100 //-s
 #define tamanoColasInternas 6 //-q
 
+//public solo se puede dentro de una clase
 struct elemento {
   int elemento;
 };
