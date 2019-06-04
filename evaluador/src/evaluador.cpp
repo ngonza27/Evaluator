@@ -265,8 +265,6 @@ int reportarResultados(){
 
 int
 deleteMemoriaCOmpartida(void) {
-  cout << "deleting !!" << endl;
-  cout << memComp << endl;
   sem_unlink("vacios");
   sem_unlink("llenos");
   sem_unlink("mutex");
@@ -386,10 +384,11 @@ main(int argc , char* argv[]){
       //reportarResultados();
     }
     if (arg1 == "stop"){
-      // -n nombre de la memoria compartida
-      //TODO: bug, so cambia el nombre de la memoria compartida a la hora de borrarlo
-      cout <<"memcomop NUEVO: " <<memComp << endl;
-      deleteMemoriaCOmpartida();
+       if(std::string (argv[2]) == "-n"){
+            nombreMemoriaCompartida = argv[3];
+            memComp = "/"+nombreMemoriaCompartida;
+       }
+      //deleteMemoriaCOmpartida();
     }
     return EXIT_SUCCESS;
 }
