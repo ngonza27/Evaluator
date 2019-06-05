@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include <semaphore.h>
 #include <cerrno>
 #include "elementos.h"
@@ -23,8 +24,6 @@ void procesosRegistro (){ }
 
 int
 initMemoriaCompartidaEntrada(void) {
-  cout << "lol" << endl;
-  cout << memComp << endl;
   sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
   sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
   sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
@@ -59,104 +58,37 @@ initMemoriaCompartidaEntrada(void) {
   pBuffer->cantidad = 0;
   pBuffer->tamano = tamanoBufferEntrada;
 
+
+  //Header *h = mmap()..;
+  //Particionando bandeja entrada
+  //int i;
+  //BandejaEntrada **ban = new BandejaEntrada[];
+  //ban[0] = (BandejaEntrada)(( (char *) n)+ sizeof(header));
+  //for(int nb=1; nb<i; ++i){
+  //  ban[nb]=(ban[nb-1])+sizeof(BandejaEntrada)* header ->ie;
+  //}
+
+  //Crear multiples semaforos:
+  //cantidad = numero bandejas de entrada: entradasEntra
+  int cantidad = 0;
+  std::string semname = "sem";
+  sem_t **arraySem = new sem_t *;
+  //sem_t **arraySem = new sem_t *[];
+
+  for(int j=0; j<cantidad; j++){
+    std::stringstream name(semname);
+    name << j;
+    std::string realName(name.str());
+
+    arraySem[j]= sem_open(realName.c_str(),
+                          O_CREAT | O_EXCL, 0660, 1);
+
+    if(arraySem[j] == SEM_FAILED){
+      cerr << "error openening semaphore" << endl;
+    }
+  }
+
   close(fd);
-
-  return EXIT_SUCCESS;
-}
-
-
-int
-crearSemaforoProductor(void) {
-
-  sem_t *vacios, *llenos, *mutex;
-
-  vacios = sem_open("vacios", 0);
-  llenos = sem_open("llenos", 0);
-  mutex  = sem_open("mutex", 0);
-
-  int fd = shm_open("/buffer", O_RDWR, 0660);
-
-  if (fd < 0) {
-    cerr << "Error abriendo la memoria compartida: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  void *dir;
-
-  if ((dir = mmap(NULL, sizeof(struct elemento), PROT_READ | PROT_WRITE, MAP_SHARED,
-		  fd, 0)) == MAP_FAILED) {
-    cerr << "Error mapeando la memoria compartida: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  struct Buffer *pBuffer = (struct Buffer *) dir;
-  int item = 0;
-
-  for(;;) {
-    item++;
-
-    sem_wait(vacios);
-    sem_wait(mutex);
-
-    pBuffer->buffer[pBuffer->entra].elemento = item;
-    pBuffer->entra = (pBuffer->entra + 1) % pBuffer->tamano;
-    pBuffer->cantidad++;
-
-    sem_post(mutex);
-    sem_post(llenos);
-    cout << "Item producido y ubicado" << endl;
-    sleep(2);
-  }
-
-  return EXIT_SUCCESS;
-}
-
-
-int
-crearSemaforoConsumidor(void) {
-
-  sem_t *vacios, *llenos, *mutex;
-
-  vacios = sem_open("vacios", 0);
-  llenos = sem_open("llenos", 0);
-  mutex  = sem_open("mutex", 0);
-
-  int fd = shm_open("/buffer", O_RDWR, 0660);
-
-  if (fd < 0) {
-    cerr << "Error abriendo la memoria compartida: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  void *dir;
-
-  if ((dir = mmap(NULL, sizeof(struct elemento), PROT_READ | PROT_WRITE, MAP_SHARED,
-		  fd, 0)) == MAP_FAILED) {
-    cerr << "Error mapeando la memoria compartida: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  
-  struct Buffer *pBuffer = (struct Buffer *) dir;
-  int item = 0;
-
-  for(;;) {
-
-    sem_wait(llenos);
-    sem_wait(mutex);
-
-    item = pBuffer->buffer[pBuffer->sale].elemento;
-    pBuffer->sale = (pBuffer->sale + 1) % pBuffer->tamano;
-    pBuffer->cantidad--;
-
-    sem_post(mutex);
-    sem_post(vacios);
-    cout << item << endl;
-  }
 
   return EXIT_SUCCESS;
 }
@@ -199,50 +131,6 @@ void hilosInternos (){
 }
 
 void procesoReportador(){ }
-
-//init
-int iniciarSistema(){
-
-  //hilos proceso de muestra = # de tipos de muestra, max = 3
-  
-  sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
-  sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
-  sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
-
-  int fd = shm_open("buffer", O_RDWR | O_CREAT | O_EXCL, 0660);
-
-  hilosMultiples(entradasEntra);
-  
-  if (fd < 0) {
-    cerr << "Error creando la memoria compartida: "
-	       << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  if (ftruncate(fd, sizeof(struct Buffer)) != 0) {
-    cerr << "Error creando la memoria compartida: "
-	       << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  void *dir;
-  if ((dir = mmap(NULL, sizeof(struct elemento), PROT_READ | PROT_WRITE, MAP_SHARED,
-		  fd, 0)) == MAP_FAILED) {
-    cerr << "Error mapeando la memoria compartida: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  struct Buffer *pBuffer = (struct Buffer *) dir;
-  pBuffer->entra = 5;
-  pBuffer->sale = 10;
-  pBuffer->cantidad = 0;
-  pBuffer->tamano = tamanoBufferEntrada;
-
-  close(fd);
-
-  return EXIT_SUCCESS;
-}
 
 //reg
 int registrarExamenes(){}
@@ -323,13 +211,13 @@ main(int argc , char* argv[]){
             }
             cola = arr[0];
             tipo = arr[1];
-//          if(stoi(cantidad) > 5){
-  //          cerr << "Cantidad no valida" << endl;
-    //      }
+            if(std::atoi(arr[2].c_str()) > 5){
+              cerr << "Cantidad no valida" << endl;
+            }
             cantidad = arr[2];
-            cout << cantidad << endl;
             ++id;
             cout << "id:" << id << endl;
+            i = 0;
           }
         } else {
           ifstream infile(filename.c_str());
@@ -349,7 +237,6 @@ main(int argc , char* argv[]){
                             outfile.close();
 
         }
-        //(nombre memoria compartida) -> [-n <string>]
     }
     
     if (arg1 == "ctrl"){
@@ -368,7 +255,23 @@ main(int argc , char* argv[]){
             }
             if(command[0] == "list"){
               if(command[1] == "all"){
-                cout << "mostrando todo" << endl;
+                cout << "mostrando all" << endl;
+                i=0;
+              }
+              if(command[1] == "reactive"){
+                cout << "mostrando reactive" << endl;
+                i=0;
+              }
+              if(command[1] == "reported"){
+                cout << "mostrando reported" << endl;
+                i=0;
+              }
+              if(command[1] == "waiting"){
+                cout << "mostrando waiting" << endl;
+                i=0;
+              }
+              if(command[1] == "processing"){
+                cout << "mostrando processing" << endl;
                 i=0;
               }
             } else {

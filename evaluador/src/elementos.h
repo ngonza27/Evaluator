@@ -1,15 +1,6 @@
 #pragma once
 #define tamanoBufferEntrada 99
 
-#define entradasEntra 5 //-i
-#define tamanoColasExternas 6 //-ie
-#define entradasSalida 10 //-oe
-#define B 100 //-b
-#define D 100 //-d
-#define S 100 //-s
-#define tamanoColasInternas 6 //-q
-//int tamanoBufferEntrada = 99;
-//public solo se puede dentro de una clase
 struct elemento {
   int elemento;
 };
@@ -22,14 +13,28 @@ struct Buffer {
   struct elemento buffer[tamanoBufferEntrada];
 };
 
-struct BandejasEntrada{
-  int posicionesEntra[tamanoColasExternas];
+struct Header {
+  int entradasEntra = 5; //-i
+  int tamanoColasExternas = 6; //-ie
+  int entradasSalida = 10; //-oe
+  //int B = 100; //-b
+  //int D = 100; //-d
+  //int S = 100; //-s
+  int tamanoColasInternas = 6; //-q
 };
 
-struct BandejasInternas{
-  int tamanoInternas[tamanoColasInternas];
+struct BandejasEntrada{
+  int entra;
+  int sale;
+  int cantidad;
+  int tamano;
+  //int posicionesEntra[tamanoColasExternas];
 };
 
 struct BandejaSalida{
-  int tamanoSalida[tamanoColasExternas];
+  int entra;
+  int sale;
+  int cantidad;
+  int tamano;
+  //int tamanoSalida[tamanoColasExternas];
 };
