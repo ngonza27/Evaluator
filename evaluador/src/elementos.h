@@ -14,22 +14,25 @@ struct Buffer {
 };
 
 struct Header {
-  int entradasEntra = 5; //-i
-  int tamanoColasExternas = 6; //-ie
-  int entradasSalida = 10; //-oe
-  //int B = 100; //-b
-  //int D = 100; //-d
-  //int S = 100; //-s
-  int tamanoColasInternas = 6; //-q
-};
+  int entradasEntra; //-i numero entradas
+  int tamanoColasExternas; //-ie numero posiciones de cada cola
+  int entradasSalida; //-oe n numero entradas cola de salida
+  int tamanoColasInternas ; //-q
+} Header;
 
 struct BandejasEntrada{
   int entra;
   int sale;
   int cantidad;
   int tamano;
-  //int posicionesEntra[tamanoColasExternas];
-};
+  int colasEntra[0];
+} BandejasEntrada;
+
+struct muestra {
+  int i;
+  char k;
+  int cantidad;
+} muestra;
 
 struct BandejaSalida{
   int entra;
@@ -37,4 +40,4 @@ struct BandejaSalida{
   int cantidad;
   int tamano;
   //int tamanoSalida[tamanoColasExternas];
-};
+} BandejaSalida;

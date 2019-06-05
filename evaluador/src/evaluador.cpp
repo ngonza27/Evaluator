@@ -18,12 +18,10 @@
 using namespace std;
 
 string nombreMemoriaCompartida = "evaluator"; //-n
-//BUFFER compartido = cola de entrada
 string memComp = "/"+nombreMemoriaCompartida;
-void procesosRegistro (){ }
 
 int
-initMemoriaCompartidaEntrada(void) {
+initMemoriaCompartidaEntrada(int i, int ie, int oe) {
   sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
   sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
   sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
@@ -36,15 +34,21 @@ initMemoriaCompartidaEntrada(void) {
     exit(1);
   }
 
-  if (ftruncate(fd, sizeof(struct Buffer)) != 0) {
+  int tamanoTotal = (sizeof(struct BandejasEntrada) + 
+                     sizeof(struct Header) + 
+                     sizeof(struct BandejaSalida)
+                    );
+
+  if (ftruncate(fd, tamanoTotal) != 0) {
     cerr << "Error creando la memoria compartida: "
 	       << errno << strerror(errno) << endl;
     exit(1);
   }
 
+  //
+
   void *dir;
 
-  //aca se hace el mapeo de las bandejas
   if ((dir = mmap(NULL, sizeof(struct elemento), PROT_READ | PROT_WRITE, MAP_SHARED,
 		  fd, 0)) == MAP_FAILED) {
     cerr << "Error mapeando la memoria compartida: "
@@ -52,12 +56,48 @@ initMemoriaCompartidaEntrada(void) {
     exit(1);
   }
 
-  struct Buffer *pBuffer = (struct Buffer *) dir;
-  pBuffer->entra = 5;
-  pBuffer->sale = 10;
-  pBuffer->cantidad = 0;
-  pBuffer->tamano = tamanoBufferEntrada;
+  //aca se hace el mapeo de las bandejas
+  //Mapeo COLAS ENTRADA
+  if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*Header.entradasEntra*Header.tamanoColasExternas), PROT_READ | PROT_WRITE, MAP_SHARED,
+		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida ENTRADA: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
 
+  //Mapeo HEADER
+  //if ((dir = mmap(NULL, (sizeof(struct Header)), PROT_READ | PROT_WRITE, MAP_SHARED,
+  //		  fd, 0)) == MAP_FAILED) {
+  //  cerr << "Error mapeando la memoria compartida HEADER: "
+	// << errno << strerror(errno) << endl;
+  //  exit(1);
+  //}
+
+  //Mapeo COLAS SALIDA
+  //if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*Header.entradasSalida), PROT_READ | PROT_WRITE, MAP_SHARED,
+	//	  fd, 0)) == MAP_FAILED) {
+  //  cerr << "Error mapeando la memoria compartida SALIDA: "
+	// << errno << strerror(errno) << endl;
+  //  exit(1);
+  //}
+
+  struct Header *pHeader = (struct Header *)dir;
+  pHeader->entradasEntra = 5; //-i
+  pHeader->tamanoColasExternas = 6; //-ie 
+  pHeader->entradasSalida = 10; //-oe
+  pHeader->tamanoColasInternas = 6; //-q
+
+  struct BandejasEntrada *pEntra = (struct BandejasEntrada *)dir;
+  pEntra->entra = 0;
+  pEntra->sale = 0;
+  pEntra->cantidad = 0;
+  pEntra->tamano = tamanoBufferEntrada;
+
+  struct BandejaSalida   *pSale  = (struct BandejaSalida * )dir;
+  pSale->entra = 0;
+  pSale->sale = 0;
+  pSale->cantidad = 0;
+  pSale->tamano = tamanoBufferEntrada;
 
   //Header *h = mmap()..;
   //Particionando bandeja entrada
@@ -68,25 +108,26 @@ initMemoriaCompartidaEntrada(void) {
   //  ban[nb]=(ban[nb-1])+sizeof(BandejaEntrada)* header ->ie;
   //}
 
+
   //Crear multiples semaforos:
   //cantidad = numero bandejas de entrada: entradasEntra
-  int cantidad = 0;
-  std::string semname = "sem";
-  sem_t **arraySem = new sem_t *;
-  //sem_t **arraySem = new sem_t *[];
+  
+  //int cantidad = 0;
+  //std::string semname = "sem";
+  //sem_t **arraySem = new sem_t *[cantidad];
 
-  for(int j=0; j<cantidad; j++){
-    std::stringstream name(semname);
-    name << j;
-    std::string realName(name.str());
+  //for(int j=0; j<cantidad; j++){
+  //  std::ostringstream name(semname);
+  //  name  << semname << j;
+  //  std::string realName(name.str());
 
-    arraySem[j]= sem_open(realName.c_str(),
-                          O_CREAT | O_EXCL, 0660, 1);
+  //  arraySem[j]= sem_open(realName.c_str(),
+  //                        O_CREAT | O_EXCL, 0660, 1);
 
-    if(arraySem[j] == SEM_FAILED){
-      cerr << "error openening semaphore" << endl;
-    }
-  }
+  //  if(arraySem[j] == SEM_FAILED){
+  //    cerr << "error openening semaphore" << endl;
+  //  }
+  //}
 
   close(fd);
 
@@ -130,7 +171,11 @@ void hilosInternos (){
   pthread_join(interno3, NULL);
 }
 
-void procesoReportador(){ }
+void evaluar(int tamanoColasInternas){ 
+  //struct muestra B[tamanoColasInternas];
+  //struct muestra D[tamanoColasInternas];
+  //struct muestra S[tamanoColasInternas];
+}
 
 //reg
 int registrarExamenes(){}
@@ -179,17 +224,32 @@ main(int argc , char* argv[]){
 
     std::string arg1(argv[1]);
     if (arg1 == "init"){
+      int i = 0;
+      int ie = 0;
+      int oe = 0;
+      int b = 0;
+      int d = 0;
+      int s = 0;
+      int q = 0;
         for(int i=1; i < argc; ++i){
-          if(std::string (argv[i]) == "-n"){
+          if(std::string (argv[i]) == "-n"){ 
             nombreMemoriaCompartida = argv[i+1];
             memComp = "/"+nombreMemoriaCompartida;
           }
+          //TODO: poner bien los valores de cada variable
+          if(std::string (argv[i]) == "-i"){ int i = 0; }
+          if(std::string (argv[i]) == "-ie"){ int ie = 0;  }
+          if(std::string (argv[i]) == "-oe"){ int oe = 0;  }
+          if(std::string (argv[i]) == "-b"){ int b = 0;  }
+          if(std::string (argv[i]) == "-d"){ int d = 0;  }
+          if(std::string (argv[i]) == "-s"){ int s = 0;  }
+          if(std::string (argv[i]) == "-q"){ int q = 0;  }
         }
-        cout << nombreMemoriaCompartida << endl;
-        cout <<"memcomop NUEVO: " <<memComp << endl;
-        //initMemoriaCompartidaEntrada();
+        //cout << nombreMemoriaCompartida << endl;
+        //cout <<"memcomop NUEVO: " <<memComp << endl;
+        initMemoriaCompartidaEntrada(i,ie,oe);
     }
-    if(arg1 == "reg"){
+    if(arg1 == "reg"){ //registrar examenes
         int idFicheros;
         string contenido[100];
         if (argv[2] == NULL)
@@ -223,7 +283,8 @@ main(int argc , char* argv[]){
           ifstream infile(filename.c_str());
           ofstream outfile;
           int j=0;
-          //Falta obtener varios ficheros
+
+          //TODO: Falta obtener varios ficheros
           outfile.open("out.spl"); //falta obtener el nombre de cada fichero
           while (!infile.eof()){
               infile >> contenido[j];
@@ -239,7 +300,7 @@ main(int argc , char* argv[]){
         }
     }
     
-    if (arg1 == "ctrl"){
+    if (arg1 == "ctrl"){ //mostrar estado del sistema, agregar reactivos
         //-n nombre memoria compartida
         //revisarSistema();
         string command[2];
@@ -253,6 +314,7 @@ main(int argc , char* argv[]){
                 ++i;
                 cout << i << endl;
             }
+            //TODO: quitar los mostrar y hacer los cout de lo que se necesita
             if(command[0] == "list"){
               if(command[1] == "all"){
                 cout << "mostrando all" << endl;
@@ -275,6 +337,7 @@ main(int argc , char* argv[]){
                 i=0;
               }
             } else {
+              //TODO:hay que agregar cosas a esto
               cout << "update mode " << command[0] << endl;  
             }
           }
@@ -287,10 +350,16 @@ main(int argc , char* argv[]){
       //reportarResultados();
     }
     if (arg1 == "stop"){
-       if(std::string (argv[2]) == "-n"){
-            nombreMemoriaCompartida = argv[3];
-            memComp = "/"+nombreMemoriaCompartida;
-       }
+
+      //terminate called after throwing an instance of 'std::logic_error'
+      //what():  basic_string::_M_construct null not valid
+      //Aborted (core dumped)
+
+      
+       //if(std::string (argv[2]) == "-n"){
+       //    nombreMemoriaCompartida = argv[3];
+       //    memComp = "/"+nombreMemoriaCompartida;
+       //}
       //deleteMemoriaCOmpartida();
     }
     return EXIT_SUCCESS;
