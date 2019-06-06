@@ -15,16 +15,27 @@
 #include <sstream>
 #include <fstream>
 
+
+//TODO: PROBAR EN EL PRODUCTOR CONSUMIDOR YA DECLARANDO LOS VALORES DEL BUFFER, INCREMENTAR EL VALOR DESDE OTRA FUNCION A VER SI FUNCIONA
+//cout << Header.entradasEntra <<endl;
+//cout << Header.entradasEntra + 7 <<endl;
+
+
+//HACER UN FICHERO DE PRUEBA PARA LA RECEPCION DE VARIOS FICHEROS
+
 using namespace std;
 
 string nombreMemoriaCompartida = "evaluator"; //-n
 string memComp = "/"+nombreMemoriaCompartida;
 
 int
-initMemoriaCompartidaEntrada(int i, int ie, int oe) {
-  sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
-  sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
-  sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
+initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit) {
+  cout << "i:" << iInit << endl;
+  cout << "ie:" << ieInit << endl;
+  cout << "oe:" << oeInit << endl;
+  //sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
+  //sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
+  //sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
 
   int fd = shm_open(memComp.c_str(), O_RDWR | O_CREAT | O_EXCL, 0660);
 
@@ -45,20 +56,13 @@ initMemoriaCompartidaEntrada(int i, int ie, int oe) {
     exit(1);
   }
 
-  //
+  //--------------------------------------------------------------------------------------------------------------------//
+  //aca se hace el mapeo de las bandejas
+  //Mapeo COLAS ENTRADA
 
   void *dir;
 
-  if ((dir = mmap(NULL, sizeof(struct elemento), PROT_READ | PROT_WRITE, MAP_SHARED,
-		  fd, 0)) == MAP_FAILED) {
-    cerr << "Error mapeando la memoria compartida: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  //aca se hace el mapeo de las bandejas
-  //Mapeo COLAS ENTRADA
-  if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*Header.entradasEntra*Header.tamanoColasExternas), PROT_READ | PROT_WRITE, MAP_SHARED,
+  if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*iInit*ieInit), PROT_READ | PROT_WRITE, MAP_SHARED,
 		  fd, 0)) == MAP_FAILED) {
     cerr << "Error mapeando la memoria compartida ENTRADA: "
 	 << errno << strerror(errno) << endl;
@@ -66,26 +70,28 @@ initMemoriaCompartidaEntrada(int i, int ie, int oe) {
   }
 
   //Mapeo HEADER
-  //if ((dir = mmap(NULL, (sizeof(struct Header)), PROT_READ | PROT_WRITE, MAP_SHARED,
-  //		  fd, 0)) == MAP_FAILED) {
-  //  cerr << "Error mapeando la memoria compartida HEADER: "
-	// << errno << strerror(errno) << endl;
-  //  exit(1);
-  //}
+  if ((dir = mmap(NULL, (sizeof(struct Header)), PROT_READ | PROT_WRITE, MAP_SHARED,
+  		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida HEADER: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
 
   //Mapeo COLAS SALIDA
-  //if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*Header.entradasSalida), PROT_READ | PROT_WRITE, MAP_SHARED,
-	//	  fd, 0)) == MAP_FAILED) {
-  //  cerr << "Error mapeando la memoria compartida SALIDA: "
-	// << errno << strerror(errno) << endl;
-  //  exit(1);
-  //}
+  if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*oeInit), PROT_READ | PROT_WRITE, MAP_SHARED,
+		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida SALIDA: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
+  //--------------------------------------------------------------------------------------------------------------------//
 
+  //--------------------------------------------------------------------------------------------------------------------//
   struct Header *pHeader = (struct Header *)dir;
-  pHeader->entradasEntra = 5; //-i
-  pHeader->tamanoColasExternas = 6; //-ie 
-  pHeader->entradasSalida = 10; //-oe
-  pHeader->tamanoColasInternas = 6; //-q
+  pHeader->entradasEntra=8; //-i
+  pHeader->tamanoColasExternas; //-ie 
+  pHeader->entradasSalida; //-oe
+  pHeader->tamanoColasInternas; //-q
 
   struct BandejasEntrada *pEntra = (struct BandejasEntrada *)dir;
   pEntra->entra = 0;
@@ -98,7 +104,9 @@ initMemoriaCompartidaEntrada(int i, int ie, int oe) {
   pSale->sale = 0;
   pSale->cantidad = 0;
   pSale->tamano = tamanoBufferEntrada;
+  //--------------------------------------------------------------------------------------------------------------------//
 
+  //--------------------------------------------------------------------------------------------------------------------//
   //Header *h = mmap()..;
   //Particionando bandeja entrada
   //int i;
@@ -107,12 +115,13 @@ initMemoriaCompartidaEntrada(int i, int ie, int oe) {
   //for(int nb=1; nb<i; ++i){
   //  ban[nb]=(ban[nb-1])+sizeof(BandejaEntrada)* header ->ie;
   //}
+  //--------------------------------------------------------------------------------------------------------------------//
 
-
+  //--------------------------------------------------------------------------------------------------------------------//
   //Crear multiples semaforos:
   //cantidad = numero bandejas de entrada: entradasEntra
   
-  //int cantidad = 0;
+  //int cantidad = iInit;
   //std::string semname = "sem";
   //sem_t **arraySem = new sem_t *[cantidad];
 
@@ -128,6 +137,7 @@ initMemoriaCompartidaEntrada(int i, int ie, int oe) {
   //    cerr << "error openening semaphore" << endl;
   //  }
   //}
+  //--------------------------------------------------------------------------------------------------------------------//
 
   close(fd);
 
@@ -182,12 +192,7 @@ int registrarExamenes(){}
 
 //ctrl
 int revisarSistema(){
-  //string listMod
-  //modo interactivo:
-  // while (el usuario ingrese list o update, espere)
-  // >list [ processing | waiting | reported | reactive | all]
-  // >update { B|D|S } <integer>
-  //cin >> listMode; 
+
 }
 
 //rep
@@ -198,9 +203,9 @@ int reportarResultados(){
 
 int
 deleteMemoriaCOmpartida(void) {
-  sem_unlink("vacios");
-  sem_unlink("llenos");
-  sem_unlink("mutex");
+  //sem_unlink("vacios");
+  //sem_unlink("llenos");
+  //sem_unlink("mutex");
   shm_unlink(memComp.c_str());
   return EXIT_SUCCESS;
 }
@@ -217,6 +222,8 @@ static void usage (const char* progname){
 
 int
 main(int argc , char* argv[]){
+  cout << Header.entradasEntra <<endl;
+  cout << Header.entradasEntra + 7 <<endl;
     if(argc < 2){
       cout << "Please use one of the following commands:"<< endl;
       usage(argv[0]);
@@ -224,38 +231,35 @@ main(int argc , char* argv[]){
 
     std::string arg1(argv[1]);
     if (arg1 == "init"){
-      int i = 0;
-      int ie = 0;
-      int oe = 0;
-      int b = 0;
-      int d = 0;
-      int s = 0;
-      int q = 0;
+      int i = 5;
+      int ie = 6;
+      int q = 6;
+      int oe = 10;
+      int b,d,s = 100;
         for(int i=1; i < argc; ++i){
           if(std::string (argv[i]) == "-n"){ 
             nombreMemoriaCompartida = argv[i+1];
             memComp = "/"+nombreMemoriaCompartida;
           }
           //TODO: poner bien los valores de cada variable
-          if(std::string (argv[i]) == "-i"){ int i = 0; }
-          if(std::string (argv[i]) == "-ie"){ int ie = 0;  }
-          if(std::string (argv[i]) == "-oe"){ int oe = 0;  }
-          if(std::string (argv[i]) == "-b"){ int b = 0;  }
-          if(std::string (argv[i]) == "-d"){ int d = 0;  }
-          if(std::string (argv[i]) == "-s"){ int s = 0;  }
-          if(std::string (argv[i]) == "-q"){ int q = 0;  }
+          //int i = (int)argv[i];
+          if(std::string (argv[i]) == "-i"){  }
+          if(std::string (argv[i]) == "-ie"){   }
+          if(std::string (argv[i]) == "-oe"){   }
+          if(std::string (argv[i]) == "-b"){   }
+          if(std::string (argv[i]) == "-d"){   }
+          if(std::string (argv[i]) == "-s"){   }
+          if(std::string (argv[i]) == "-q"){   }
         }
-        //cout << nombreMemoriaCompartida << endl;
-        //cout <<"memcomop NUEVO: " <<memComp << endl;
-        initMemoriaCompartidaEntrada(i,ie,oe);
+        cout << "i comando:" << i << endl;
+        cout << "ie comando:" << ie << endl;
+        cout << "oe comando:" << oe << endl;
+        //initMemoriaCompartidaEntrada(i,ie,oe);
+        //evaluar(q);
     }
     if(arg1 == "reg"){ //registrar examenes
-        int idFicheros;
-        string contenido[100];
         if (argv[2] == NULL)
             cout << "ERRRRRRRROR PS" << endl;
-        string filename = argv[2];
-        //cout << filename << endl;
         //MODO INTERACTIVO:
         if(std::string (argv[4]) == "-"){
           int id=0;
@@ -280,23 +284,52 @@ main(int argc , char* argv[]){
             i = 0;
           }
         } else {
-          ifstream infile(filename.c_str());
-          ofstream outfile;
-          int j=0;
+          int idFicheros;
+          string ficheroSalida;
+          string contenido[100];
+          string files[argc-4];
 
-          //TODO: Falta obtener varios ficheros
-          outfile.open("out.spl"); //falta obtener el nombre de cada fichero
-          while (!infile.eof()){
-              infile >> contenido[j];
-              ++j;
-              if (j%3 == 0){
-                idFicheros = j;
-                outfile << "id:" << idFicheros/3 << '\n';
-                ++idFicheros;
-              }
+          //----------------------------------------------------------------------------------//
+          //guardo todas las direcciones de los ficheros que me pasan mediante el comando reg
+          for(int p=0; p<argc-4; p++){
+            files[p]=argv[p+4];
+            //cout << files[p] << endl;
           }
-                            outfile.close();
+          //----------------------------------------------------------------------------------//
 
+          //----------------------------------------------------------------------------------//
+          //obtengo nombre para hacer el fichero .spl
+          string fileN = files[0];
+          const size_t last_slash_idx = fileN.find_last_of("\\/");
+          if (std::string::npos != last_slash_idx){
+              fileN.erase(0, last_slash_idx + 1);
+          }
+          const size_t period_idx = fileN.rfind('.');
+          if (std::string::npos != period_idx){
+              fileN.erase(period_idx);
+          }
+          //----------------------------------------------------------------------------------//
+         
+          //----------------------------------------------------------------------------------//
+          //leo el contenido de los ficheros y genero el spl con los identificadores unicos 
+          ficheroSalida = fileN+".spl";
+          ofstream outfile;
+          outfile.open(ficheroSalida); 
+          int j=0;
+          for(int y=0; y<argc-4; ++y){
+              ifstream infile(files[y].c_str());
+              while (!infile.eof()){
+                  infile >> contenido[j];
+                  ++j;
+                  if (j%3 == 0){
+                    idFicheros = j;
+                    outfile << "id:" << idFicheros/3 << '\n';
+                    ++idFicheros;
+                  }
+              }
+            }
+            outfile.close();
+            //----------------------------------------------------------------------------------//
         }
     }
     
@@ -350,17 +383,11 @@ main(int argc , char* argv[]){
       //reportarResultados();
     }
     if (arg1 == "stop"){
-
-      //terminate called after throwing an instance of 'std::logic_error'
-      //what():  basic_string::_M_construct null not valid
-      //Aborted (core dumped)
-
-      
-       //if(std::string (argv[2]) == "-n"){
-       //    nombreMemoriaCompartida = argv[3];
-       //    memComp = "/"+nombreMemoriaCompartida;
-       //}
-      //deleteMemoriaCOmpartida();
+      if( (argc>2) && (std::string (argv[2]) == "-n")){
+          nombreMemoriaCompartida = argv[3];
+          memComp = "/"+nombreMemoriaCompartida;
+      }     
+       //deleteMemoriaCOmpartida();
     }
     return EXIT_SUCCESS;
 }
