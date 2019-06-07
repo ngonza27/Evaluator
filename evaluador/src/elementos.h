@@ -1,6 +1,20 @@
 #pragma once
 #define tamanoBufferEntrada 99
 
+enum test_type{B, S, D};
+enum test_result{p, n, r};
+
+struct exam{
+  int id;
+  test_type type;
+  test_result res;
+  int quantity;
+  int queue;
+  int timeProcessing;
+  exam() {}
+  exam(int id, test_type tipo, int q, int queueIn);
+};
+
 struct elemento {
   int elemento;
 };
