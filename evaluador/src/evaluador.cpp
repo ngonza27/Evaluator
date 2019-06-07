@@ -29,7 +29,7 @@ string nombreMemoriaCompartida = "evaluator"; //-n
 string memComp = "/"+nombreMemoriaCompartida;
 
 int
-initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit) {
+initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int qInit) {
   cout << "i:" << iInit << endl;
   cout << "ie:" << ieInit << endl;
   cout << "oe:" << oeInit << endl;
@@ -139,6 +139,8 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit) {
   //}
   //--------------------------------------------------------------------------------------------------------------------//
 
+  //evaluar(qInit);
+
   close(fd);
 
   return EXIT_SUCCESS;
@@ -156,7 +158,6 @@ void hilosMultiples(int n){
  pthread_t threads[n];
    int rc;
    int i;
-   
    for( i = 0; i < n; i++ ) {
       cout << "main() : creating thread, " << i << endl;
       rc = pthread_create(&threads[i], NULL, *rutinaAejecutar, NULL);
@@ -222,8 +223,8 @@ static void usage (const char* progname){
 
 int
 main(int argc , char* argv[]){
-  cout << Header.entradasEntra <<endl;
-  cout << Header.entradasEntra + 7 <<endl;
+  //cout << Header.entradasEntra <<endl;
+  //cout << Header.entradasEntra + 7 <<endl;
     if(argc < 2){
       cout << "Please use one of the following commands:"<< endl;
       usage(argv[0]);
@@ -231,11 +232,13 @@ main(int argc , char* argv[]){
 
     std::string arg1(argv[1]);
     if (arg1 == "init"){
-      int i = 5;
+      int ii = 5;
       int ie = 6;
       int q = 6;
       int oe = 10;
-      int b,d,s = 100;
+      int d = 100;
+      int s = 100;
+      int b = 100;
         for(int i=1; i < argc; ++i){
           if(std::string (argv[i]) == "-n"){ 
             nombreMemoriaCompartida = argv[i+1];
@@ -243,21 +246,20 @@ main(int argc , char* argv[]){
           }
           //TODO: poner bien los valores de cada variable
           //int i = (int)argv[i];
-          if(std::string (argv[i]) == "-i"){  }
-          if(std::string (argv[i]) == "-ie"){   }
-          if(std::string (argv[i]) == "-oe"){   }
-          if(std::string (argv[i]) == "-b"){   }
-          if(std::string (argv[i]) == "-d"){   }
-          if(std::string (argv[i]) == "-s"){   }
-          if(std::string (argv[i]) == "-q"){   }
+          if(std::string (argv[i]) == "-i"){ ii = atoi(argv[i+1]);  }
+          if(std::string (argv[i]) == "-ie"){ ie = atoi(argv[i+1]);  }
+          if(std::string (argv[i]) == "-oe"){ oe = atoi(argv[i+1]);  }
+          if(std::string (argv[i]) == "-b"){ b = atoi(argv[i+1]);  }
+          if(std::string (argv[i]) == "-d"){ d = atoi(argv[i+1]);  }
+          if(std::string (argv[i]) == "-s"){ s = atoi(argv[i+1]);  }
+          if(std::string (argv[i]) == "-q"){ q = atoi(argv[i+1]);  }
         }
-        cout << "i comando:" << i << endl;
-        cout << "ie comando:" << ie << endl;
-        cout << "oe comando:" << oe << endl;
-        //initMemoriaCompartidaEntrada(i,ie,oe);
-        //evaluar(q);
+        cout << "i:" << ii << endl;
+        //initMemoriaCompartidaEntrada(ii,ie,oe,q);
     }
+
     if(arg1 == "reg"){ //registrar examenes
+    //TODO: hay que agregar el condicional para el -n
         if (argv[2] == NULL)
             cout << "ERRRRRRRROR PS" << endl;
         //MODO INTERACTIVO:
@@ -334,54 +336,91 @@ main(int argc , char* argv[]){
     }
     
     if (arg1 == "ctrl"){ //mostrar estado del sistema, agregar reactivos
+        //TODO: falta agregar la condicion del -n
         //-n nombre memoria compartida
-        //revisarSistema();
-        string command[2];
+        //revisarSistema(); 
+        string command[3];
         string linea;
         int i=0;
         cout << "> " << endl;
           while(getline(cin,linea)){
             stringstream ssin(linea);
-            while (ssin.good()){
+            while (ssin.good() && i <2){
                 ssin >> command[i];
                 ++i;
-                cout << i << endl;
+                //cout << i << endl;
             }
             //TODO: quitar los mostrar y hacer los cout de lo que se necesita
             if(command[0] == "list"){
-              if(command[1] == "all"){
-                cout << "mostrando all" << endl;
-                i=0;
-              }
+              //if(command[1] == "all"){
+              //  cout << " all" << endl;
+              //  i=0;
+              //}
               if(command[1] == "reactive"){
-                cout << "mostrando reactive" << endl;
+                cout << "{B D S}  reactive" << endl;
                 i=0;
               }
               if(command[1] == "reported"){
-                cout << "mostrando reported" << endl;
+                cout << "[id i k r] reported" << endl;
                 i=0;
               }
               if(command[1] == "waiting"){
-                cout << "mostrando waiting" << endl;
+                cout << "[id i k q] waiting" << endl;
                 i=0;
               }
               if(command[1] == "processing"){
-                cout << "mostrando processing" << endl;
+                cout << "[id i k q p] processing" << endl;
                 i=0;
               }
-            } else {
+            } 
+            if(command[0] == "update") {
+              string valor;
+              string tipo;
+              string line;
+              string updateValues[3];
+              int count;
               //TODO:hay que agregar cosas a esto
-              cout << "update mode " << command[0] << endl;  
+              cout << "update mode " << command[0] << endl;
+              while(getline(cin,line)){
+                stringstream ssin(line);
+                while (ssin.good()){  
+                 ssin >> updateValues[count];
+                  ++count;
+                }
+                tipo = updateValues[1];
+                valor = updateValues[2];
+                cout << "tipo:" << tipo << endl;
+                cout << "valor:" << valor << endl;
+                count =0;
+              }
             }
           }
     }
     if (arg1 == "rep"){
-      if(argc != 6){ 
-          cout << "rep - Number of arguments not met" << endl;
-          usage(argv[0]);
+        string linea;
+        int tiempo;
+        if(std::string (argv[2]) == "-n"){
+          nombreMemoriaCompartida = argv[3];
+          memComp = "/"+nombreMemoriaCompartida;
+        }
+        if(std::string (argv[4]) == "-i"){
+            while(getline(cin,linea)){
+              stringstream ssin(linea);
+              while(ssin.good()){
+                ssin >> tiempo;
+              }
+              sleep(tiempo);
+              cout << "tiempo:" << tiempo << endl;  
+            }
+            cout << "-i [id i k r]" << endl;
+        } else {
+          //-m 10 espero recibir el reporte de 10 muestras
+          //saca el reporte de la cola de salida
+          cout << "-m [id i k r]" << endl;
+        }
       }
       //reportarResultados();
-    }
+    
     if (arg1 == "stop"){
       if( (argc>2) && (std::string (argv[2]) == "-n")){
           nombreMemoriaCompartida = argv[3];
