@@ -29,13 +29,12 @@ string nombreMemoriaCompartida = "evaluator"; //-n
 string memComp = "/"+nombreMemoriaCompartida;
 
 int
-initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int qInit) {
-  cout << "i:" << iInit << endl;
-  cout << "ie:" << ieInit << endl;
-  cout << "oe:" << oeInit << endl;
-  //sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
-  //sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
-  //sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
+initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int dInit, int sInit, int qInit) {
+
+
+  sem_t *vacios = sem_open("vacios", O_CREAT | O_EXCL, 0660, tamanoBufferEntrada);
+  sem_t *llenos = sem_open("llenos", O_CREAT | O_EXCL, 0660, 0);
+  sem_t *mutex  = sem_open("mutex", O_CREAT | O_EXCL, 0660, 1);
 
   int fd = shm_open(memComp.c_str(), O_RDWR | O_CREAT | O_EXCL, 0660);
 
@@ -45,9 +44,9 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int qInit) {
     exit(1);
   }
 
-  int tamanoTotal = (sizeof(struct BandejasEntrada) + 
-                     sizeof(struct Header) + 
-                     sizeof(struct BandejaSalida)
+  int tamanoTotal = (sizeof(struct BandejasEntrada)*iInit*ieInit +  
+                     sizeof(struct BandejaSalida)*qInit +
+                     sizeof(struct Tipo)
                     );
 
   if (ftruncate(fd, tamanoTotal) != 0) {
@@ -58,53 +57,35 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int qInit) {
 
   //--------------------------------------------------------------------------------------------------------------------//
   //aca se hace el mapeo de las bandejas
-  //Mapeo COLAS ENTRADA
-
+  //Mapeo
   void *dir;
 
-  if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*iInit*ieInit), PROT_READ | PROT_WRITE, MAP_SHARED,
-		  fd, 0)) == MAP_FAILED) {
-    cerr << "Error mapeando la memoria compartida ENTRADA: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
+   if ((dir = mmap(NULL, (sizeof(struct Buffer)), PROT_READ | PROT_WRITE, MAP_SHARED,
+	 	  fd, 0)) == MAP_FAILED) {
+     cerr << "Error mapeando la memoria compartida ENTRADA: "
+	  << errno << strerror(errno) << endl;
+     exit(1);
+   }
 
-  //Mapeo HEADER
-  if ((dir = mmap(NULL, (sizeof(struct Header)), PROT_READ | PROT_WRITE, MAP_SHARED,
-  		  fd, 0)) == MAP_FAILED) {
-    cerr << "Error mapeando la memoria compartida HEADER: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
-
-  //Mapeo COLAS SALIDA
-  if ((dir = mmap(NULL, (sizeof(struct BandejasEntrada)*oeInit), PROT_READ | PROT_WRITE, MAP_SHARED,
-		  fd, 0)) == MAP_FAILED) {
-    cerr << "Error mapeando la memoria compartida SALIDA: "
-	 << errno << strerror(errno) << endl;
-    exit(1);
-  }
   //--------------------------------------------------------------------------------------------------------------------//
 
   //--------------------------------------------------------------------------------------------------------------------//
-  struct Header *pHeader = (struct Header *)dir;
-  pHeader->entradasEntra=8; //-i
-  pHeader->tamanoColasExternas; //-ie 
-  pHeader->entradasSalida; //-oe
-  pHeader->tamanoColasInternas; //-q
+  struct Buffer *pBuffer = (struct Buffer *)dir;
+  pBuffer->bandejaEntrada.entradasEntra=iInit; //-i
+  pBuffer->bandejaEntrada.tamanoColasExternas=ieInit; //-ie 
+  pBuffer->bandejaEntrada.entradasSalida=oeInit; //-oe
+  pBuffer->bandejaEntrada.tamanoColasInternas=qInit; //-q
+  pBuffer->tipo.b=bInit;
+  pBuffer->tipo.d=dInit;
+  pBuffer->tipo.s=sInit;
+  //pBuffer->bandejaSalida[pBuffer->entra].entra=0;
+  //pBuffer->bandejaSalida[pBuffer->entra].sale=0;
+  //pBuffer->bandejaSalida[pBuffer->entra].cantidad=0;
+  //pBuffer->muestra[pBuffer->entra].id=0;
+  //pBuffer->muestra[pBuffer->entra].k=0;
+  //pBuffer->muestra[pBuffer->entra].cantidad=0;
 
-  struct BandejasEntrada *pEntra = (struct BandejasEntrada *)dir;
-  pEntra->entra = 0;
-  pEntra->sale = 0;
-  pEntra->cantidad = 0;
-  pEntra->tamano = tamanoBufferEntrada;
-
-  struct BandejaSalida   *pSale  = (struct BandejaSalida * )dir;
-  pSale->entra = 0;
-  pSale->sale = 0;
-  pSale->cantidad = 0;
-  pSale->tamano = tamanoBufferEntrada;
-  //--------------------------------------------------------------------------------------------------------------------//
+  // //--------------------------------------------------------------------------------------------------------------------//
 
   //--------------------------------------------------------------------------------------------------------------------//
   //Header *h = mmap()..;
@@ -139,7 +120,8 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int qInit) {
   //}
   //--------------------------------------------------------------------------------------------------------------------//
 
-  //evaluar(qInit);
+  //hilosMultiples();
+  //hilosInternos();
 
   close(fd);
 
@@ -188,25 +170,93 @@ void evaluar(int tamanoColasInternas){
   //struct muestra S[tamanoColasInternas];
 }
 
-//reg
-int registrarExamenes(){}
+void mostrar(string queMuestro, string memoria){
+  int fd = shm_open(memComp.c_str(), O_RDWR, 0660);
 
-//ctrl
-int revisarSistema(){
+  if (fd < 0) {
+    cerr << "Error creando la memoria compartida: "
+	       << errno << strerror(errno) << endl;
+    exit(1);
+  }
 
+  void *dir;
+
+  //Mapeo TIPOS
+  if ((dir = mmap(NULL, (sizeof(struct Tipo)), PROT_READ | PROT_WRITE, MAP_SHARED,
+  		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida HEADER: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
+  struct Tipo *pTipo = (struct Tipo *)dir;
+  if(queMuestro == "reactive"){
+    cout << "B: [id i k q p ]" << pTipo->b
+         << "\nD: " << pTipo->d
+         << "\nS: " << pTipo->s << endl;
+  }
+  if(queMuestro == "processing"){}
+  if(queMuestro == "waiting"){}
+  if(queMuestro == "reported"){}
 }
 
-//rep
-int reportarResultados(){
-  //liberar el reporte
-  //shm ó sem unlink?
+void actualizar(string tipo, string valor, string memComp){
+  int fd = shm_open(memComp.c_str(), O_RDWR, 0660);
+
+  if (fd < 0) {
+    cerr << "Error creando la memoria compartida: "
+	       << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  void *dir;
+
+  //Mapeo TIPOS
+  if ((dir = mmap(NULL, (sizeof(struct Tipo)), PROT_READ | PROT_WRITE, MAP_SHARED,
+  		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida HEADER: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  struct Tipo *pTipo = (struct Tipo *)dir;
+
+  if(tipo == "B"){
+    pTipo->b=pTipo->b+stoi(valor);
+    cout << "B:" << pTipo->b << endl;
+  } else if (tipo == "D"){
+    pTipo->d=pTipo->d+stoi(valor);
+    cout << "D:" << pTipo->d << endl;
+  } else {
+    pTipo->s=pTipo->s+stoi(valor);
+    cout << "S:" << pTipo->s << endl;
+  }
 }
+
+int procesarExamenes(string tipo,string memoria){
+  int res;
+  if(tipo == "B"){
+    res = rand() % ((7-1) +1) + 1;
+  }
+  if(tipo == "D"){
+    res = rand() % ((20-5) +1) + 1;
+  }
+  if(tipo == "S"){
+    res = rand() % ((25-8) +1) + 1;
+  }
+  return res;
+}
+
+void procesando(){}
+
+void esperando(){}
+
+void reportados(){}
 
 int
 deleteMemoriaCOmpartida(void) {
-  //sem_unlink("vacios");
-  //sem_unlink("llenos");
-  //sem_unlink("mutex");
+  sem_unlink("vacios");
+  sem_unlink("llenos");
+  sem_unlink("mutex");
   shm_unlink(memComp.c_str());
   return EXIT_SUCCESS;
 }
@@ -255,7 +305,7 @@ main(int argc , char* argv[]){
           if(std::string (argv[i]) == "-q"){ q = atoi(argv[i+1]);  }
         }
         cout << "i:" << ii << endl;
-        //initMemoriaCompartidaEntrada(ii,ie,oe,q);
+        initMemoriaCompartidaEntrada(ii,ie,oe,b,d,s,q);
     }
 
     if(arg1 == "reg"){ //registrar examenes
@@ -342,10 +392,17 @@ main(int argc , char* argv[]){
         string command[3];
         string linea;
         int i=0;
+        if( (argc>2) && (std::string (argv[2]) == "-n")){
+          nombreMemoriaCompartida = argv[3];
+          memComp = "/"+nombreMemoriaCompartida;
+        }     
         cout << "> " << endl;
           while(getline(cin,linea)){
             stringstream ssin(linea);
-            while (ssin.good() && i <2){
+            command[0]="0";
+            command[1]="0";
+            command[2]="0";
+            while (ssin.good()){
                 ssin >> command[i];
                 ++i;
                 //cout << i << endl;
@@ -357,7 +414,7 @@ main(int argc , char* argv[]){
               //  i=0;
               //}
               if(command[1] == "reactive"){
-                cout << "{B D S}  reactive" << endl;
+                mostrar("reactive", memComp);
                 i=0;
               }
               if(command[1] == "reported"){
@@ -376,23 +433,12 @@ main(int argc , char* argv[]){
             if(command[0] == "update") {
               string valor;
               string tipo;
-              string line;
-              string updateValues[3];
-              int count;
-              //TODO:hay que agregar cosas a esto
-              cout << "update mode " << command[0] << endl;
-              while(getline(cin,line)){
-                stringstream ssin(line);
-                while (ssin.good()){  
-                 ssin >> updateValues[count];
-                  ++count;
-                }
-                tipo = updateValues[1];
-                valor = updateValues[2];
-                cout << "tipo:" << tipo << endl;
-                cout << "valor:" << valor << endl;
-                count =0;
-              }
+              tipo = command[1];
+              valor = command[2];
+              //cout << "tipo:" << tipo << endl;
+              //cout << "valor:" << valor << endl;
+              actualizar(tipo, valor, memComp);
+              i=0;
             }
           }
     }
@@ -426,7 +472,7 @@ main(int argc , char* argv[]){
           nombreMemoriaCompartida = argv[3];
           memComp = "/"+nombreMemoriaCompartida;
       }     
-       //deleteMemoriaCOmpartida();
+      deleteMemoriaCOmpartida();
     }
     return EXIT_SUCCESS;
 }
