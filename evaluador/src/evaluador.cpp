@@ -78,6 +78,9 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
   pBuffer->tipo.b=bInit;
   pBuffer->tipo.d=dInit;
   pBuffer->tipo.s=sInit;
+  cout << "tipob:"<< pBuffer->tipo.b << endl;
+  cout << "tipod:"<< pBuffer->tipo.d << endl;
+  cout << "tipos:"<< pBuffer->tipo.s << endl;
   //pBuffer->bandejaSalida[pBuffer->entra].entra=0;
   //pBuffer->bandejaSalida[pBuffer->entra].sale=0;
   //pBuffer->bandejaSalida[pBuffer->entra].cantidad=0;
@@ -188,11 +191,11 @@ void mostrar(string queMuestro, string memoria){
 	 << errno << strerror(errno) << endl;
     exit(1);
   }
-  struct Tipo *pTipo = (struct Tipo *)dir;
+  struct Buffer *pBuffer = (struct Buffer *)dir;
   if(queMuestro == "reactive"){
-    cout << "B: [id i k q p ]" << pTipo->b
-         << "\nD: " << pTipo->d
-         << "\nS: " << pTipo->s << endl;
+    cout << "B: " << pBuffer->tipo.b
+         << "\nD: " << pBuffer->tipo.d
+         << "\nS: " << pBuffer->tipo.s << endl;
   }
   if(queMuestro == "processing"){}
   if(queMuestro == "waiting"){}
@@ -218,17 +221,17 @@ void actualizar(string tipo, string valor, string memComp){
     exit(1);
   }
 
-  struct Tipo *pTipo = (struct Tipo *)dir;
+  struct Buffer *pBuffer = (struct Buffer *)dir;
 
   if(tipo == "B"){
-    pTipo->b=pTipo->b+stoi(valor);
-    cout << "B:" << pTipo->b << endl;
+    pBuffer->tipo.b=pBuffer->tipo.b+stoi(valor);
+    cout << "B:" << pBuffer->tipo.b << endl;
   } else if (tipo == "D"){
-    pTipo->d=pTipo->d+stoi(valor);
-    cout << "D:" << pTipo->d << endl;
+    pBuffer->tipo.d=pBuffer->tipo.d+stoi(valor);
+    cout << "D:" << pBuffer->tipo.d << endl;
   } else {
-    pTipo->s=pTipo->s+stoi(valor);
-    cout << "S:" << pTipo->s << endl;
+    pBuffer->tipo.s=pBuffer->tipo.s+stoi(valor);
+    cout << "S:" << pBuffer->tipo.s << endl;
   }
 }
 
