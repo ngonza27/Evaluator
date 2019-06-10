@@ -398,9 +398,9 @@ main(int argc , char* argv[]){
         cout << "Posiciones cola entrada:" << ie << endl;
         cout << "Entradas colas de salida:" << oe << endl;
         cout << "Nombre memoria compartida:" << memComp << endl;
-        cout << "Sangre:" << b << endl;
+        cout << "Blood:" << b << endl;
         cout << "Ditritos:" << d << endl;
-        cout << "Piel:" << s << endl;
+        cout << "Skin:" << s << endl;
         cout << "Tamano colas internas:" << s << endl;
         initMemoriaCompartidaEntrada(ii,ie,oe,b,d,s,q);
     }
