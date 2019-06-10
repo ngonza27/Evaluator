@@ -23,7 +23,9 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
 
   //sem_init(sem, 1, 1);
 
-  int tamanoTotal = (sizeof(struct Buffer) +
+  int tamanoTotal = (sizeof(struct Tipo) +
+                     sizeof(struct BandejaSalida)*qInit+
+                     sizeof(struct BandejasEntrada)*iInit*ieInit+
                      sizeof(sem_t)*iInit*3 +
                      sizeof(sem_t)*3
                     );
@@ -173,6 +175,9 @@ void mostrar(string queMuestro, string memoria){
          << "\nS: " << pBuffer->tipo.s << endl;
   }
   for(int i=0; i <num-1 ;++i){
+  if (pBuffer->bandejaEntrada.cola[i].muestra[0].idCola == 0){
+    break;
+  }
   if(queMuestro == "processing"){
     //[id i k q p NL]
   }
