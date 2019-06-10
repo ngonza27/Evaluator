@@ -23,9 +23,7 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
 
   //sem_init(sem, 1, 1);
 
-  int tamanoTotal = (sizeof(struct BandejasEntrada)*iInit*ieInit +  
-                     sizeof(struct BandejaSalida)*qInit +
-                     sizeof(struct Tipo) +
+  int tamanoTotal = (sizeof(struct Buffer) +
                      sizeof(sem_t)*iInit*3 +
                      sizeof(sem_t)*3
                     );
