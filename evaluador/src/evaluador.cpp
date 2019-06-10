@@ -419,7 +419,9 @@ main(int argc , char* argv[]){
           string arr[3];
           string cola,tipo,cantidad;
           int i = 0; //CON ESTE i PUEDO GENERAR EL IDENTIFICADOR
+          cout << "> " << endl;
           while(getline(cin,linea)){
+            cout << "> " << endl;
             stringstream ssin(linea);
             while (ssin.good() && i < 3){
                 ssin >> arr[i];
@@ -560,6 +562,7 @@ main(int argc , char* argv[]){
           memComp = "/"+nombreMemoriaCompartida;
         }
         if(std::string (argv[4]) == "-i"){
+          cout << "Insert integer: " << endl;
             while(getline(cin,linea)){
               stringstream ssin(linea);
               while(ssin.good()){
