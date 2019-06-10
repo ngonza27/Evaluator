@@ -90,6 +90,7 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
   //hilosMultiples();
   //hilosInternos();
   close(fd);
+  for(;;){}
   return EXIT_SUCCESS;
 }
 
@@ -384,8 +385,7 @@ main(int argc , char* argv[]){
           if((ii || ie || q || oe || d || s || b) < 0){
             cerr << "Porfavor ingresar valores positivos" << endl;
           }
-          //TODO: poner bien los valores de cada variable
-          //int i = (int)argv[i];
+
           if(std::string (argv[i]) == "-i"){ ii = atoi(argv[i+1]);  }
           if(std::string (argv[i]) == "-ie"){ ie = atoi(argv[i+1]);  }
           if(std::string (argv[i]) == "-oe"){ oe = atoi(argv[i+1]);  }
@@ -501,10 +501,7 @@ main(int argc , char* argv[]){
         }
     }
     
-    if (arg1 == "ctrl"){ //mostrar estado del sistema, agregar reactivos
-        //TODO: falta agregar la condicion del -n
-        //-n nombre memoria compartida
-        //revisarSistema(); 
+    if (arg1 == "ctrl"){ 
         string command[3];
         string linea;
         int i=0;
