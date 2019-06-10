@@ -38,7 +38,7 @@ struct Simulador{
 struct Muestra{
   int idCola;
   int id;
-  std::string k;
+  char k;
   int cantidad;
 };
 
@@ -65,6 +65,7 @@ struct BandejaSalida{
 };
 
 struct Buffer {
+  int cant;
   struct Simulador simulador;
   struct Tipo tipo;
   struct BandejasEntrada bandejaEntrada;

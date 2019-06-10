@@ -51,12 +51,15 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
 
   //--------------------------------------------------------------------------------------------------------------------//
   struct Buffer *pBuffer = (struct Buffer *)dir;
-  pBuffer->bandejaEntrada.cola[0].simulador.entra=0; //-i
-  pBuffer->bandejaEntrada.cola[0].simulador.sale=0; //-i
-  pBuffer->bandejaEntrada.cola[0].simulador.cantidad=0; //-i
-  pBuffer->bandejaSalida.cola[0].simulador.entra=0; 
-  pBuffer->bandejaSalida.cola[0].simulador.sale=0;
-  pBuffer->bandejaSalida.cola[0].simulador.cantidad=0;
+  for(int i=0; i<iInit; ++i){
+    pBuffer->bandejaEntrada.cola[i].simulador.entra=0; //-i
+    pBuffer->bandejaEntrada.cola[i].simulador.sale=0; //-i
+    pBuffer->bandejaEntrada.cola[i].simulador.cantidad=0; //-i
+    pBuffer->bandejaSalida.cola[i].simulador.entra=0; 
+    pBuffer->bandejaSalida.cola[i].simulador.sale=0;
+    pBuffer->bandejaSalida.cola[i].simulador.cantidad=0;
+  }
+  pBuffer->cant=iInit;
   pBuffer->tipo.b=bInit;
   pBuffer->tipo.d=dInit;
   pBuffer->tipo.s=sInit;
@@ -161,31 +164,35 @@ void mostrar(string queMuestro, string memoria){
     exit(1);
   }
 
-  struct Buffer *pBuffer = (struct Buffer *)dir;
   
+  struct Buffer *pBuffer = (struct Buffer *)dir;
+  int num = pBuffer->cant;
+
   if(queMuestro == "reactive"){
     cout << "B: " << pBuffer->tipo.b
          << "\nD: " << pBuffer->tipo.d
          << "\nS: " << pBuffer->tipo.s << endl;
   }
+  for(int i=0; i <num-1 ;++i){
   if(queMuestro == "processing"){
     //[id i k q p NL]
   }
   if(queMuestro == "waiting"){
     //[id i k q NL]
-    cout << "id: "  <<  pBuffer->bandejaEntrada.cola[0].muestra[0].idCola
-         << "\ni (cola entrada); " << pBuffer->bandejaEntrada.cola[0].muestra[0].id
-         << "\nk (tipo muestra); " << pBuffer->bandejaEntrada.cola[0].muestra[0].k
-         << "\nq (cantidad de muestra)" << pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad
+    cout << "id: "  <<  pBuffer->bandejaEntrada.cola[i].muestra[0].idCola
+         << "\ni (cola entrada); " << pBuffer->bandejaEntrada.cola[i].muestra[1].id
+         << "\nk (tipo muestra); " << pBuffer->bandejaEntrada.cola[i].muestra[2].k
+         << "\nq (cantidad de muestra)" << pBuffer->bandejaEntrada.cola[i].muestra[3].cantidad
          << endl;
   }
   if(queMuestro == "reported"){
     //[id i k r NL]
-    cout << "id: "   << pBuffer->bandejaEntrada.cola[0].muestra[0].idCola
-         << "\ni (cola entrada); " << pBuffer->bandejaEntrada.cola[0].muestra[0].id
-         << "\nk (tipo muestra); " << pBuffer->bandejaEntrada.cola[0].muestra[0].k
+    cout << "id: "   << pBuffer->bandejaSalida.cola[i].muestra[0].idCola
+         << "\ni (cola entrada); " << pBuffer->bandejaSalida.cola[i].muestra[2].id
+         << "\nk (tipo muestra); " << pBuffer->bandejaSalida.cola[i].muestra[3].k
          << "\nr (resultado  de la muestra P,N,?)" << res
          << endl;
+  }
   }
 }
 
@@ -269,26 +276,26 @@ void agregarColaEntrada(int id, string cola, string tipo, string valor, string m
 	 << errno << strerror(errno) << endl;
     exit(1);
   }
-
+  char c;
+  strcpy(&c,tipo.c_str());
   struct Buffer *pBuffer = (struct Buffer *)dir;
 
   if(tipo == "B"){
-    pBuffer->bandejaEntrada.cola[0].muestra[0].idCola=id;
-    pBuffer->bandejaEntrada.cola[0].muestra[0].id=stoi(cola); 
-    pBuffer->bandejaEntrada.cola[0].muestra[0].k=tipo; 
-    pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad=stoi(valor); 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[0].idCola=id;
+    pBuffer->bandejaEntrada.cola[id-1].muestra[1].id=stoi(cola); 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[2].k=c;
+    pBuffer->bandejaEntrada.cola[id-1].muestra[3].cantidad=stoi(valor); 
   } else if (tipo == "D"){
-    pBuffer->bandejaEntrada.cola[0].muestra[0].idCola=id;
-    pBuffer->bandejaEntrada.cola[0].muestra[0].id=stoi(cola); 
-    pBuffer->bandejaEntrada.cola[0].muestra[0].k=tipo; 
-    pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad=stoi(valor); 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[0].idCola=id;
+    pBuffer->bandejaEntrada.cola[id-1].muestra[1].id=stoi(cola); 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[2].k=c; 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[3].cantidad=stoi(valor); 
   } else {
-    pBuffer->bandejaEntrada.cola[0].muestra[0].idCola=id;
-    pBuffer->bandejaEntrada.cola[0].muestra[0].id=stoi(cola); 
-    pBuffer->bandejaEntrada.cola[0].muestra[0].k=tipo; 
-    pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad=stoi(valor); 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[0].idCola=id;
+    pBuffer->bandejaEntrada.cola[id-1].muestra[1].id=stoi(cola); 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[2].k=c; 
+    pBuffer->bandejaEntrada.cola[id-1].muestra[3].cantidad=stoi(valor); 
   }
-
 }
 
 //reported
@@ -311,25 +318,25 @@ void agregarColaSalida(int id,string cola, string tipo, string valor, string mem
     exit(1);
   }
 
+  char c;
+  strcpy(&c,tipo.c_str());
   struct Buffer *pBuffer = (struct Buffer *)dir; 
 
-  //en la cola agregar...}
-
   if(tipo == "B"){
-    pBuffer->bandejaSalida.cola[0].muestra[0].idCola=id;
-    pBuffer->bandejaSalida.cola[0].muestra[0].id=stoi(cola); 
-    pBuffer->bandejaSalida.cola[0].muestra[0].k=tipo; 
-    pBuffer->bandejaSalida.cola[0].muestra[0].cantidad=stoi(valor); 
+    pBuffer->bandejaSalida.cola[id-1].muestra[0].idCola=id;
+    pBuffer->bandejaSalida.cola[id-1].muestra[1].id=stoi(cola); 
+    pBuffer->bandejaSalida.cola[id-1].muestra[2].k=c; 
+    pBuffer->bandejaSalida.cola[id-1].muestra[3].cantidad=stoi(valor); 
   } else if (tipo == "D"){
-    pBuffer->bandejaSalida.cola[0].muestra[0].idCola=id;
-    pBuffer->bandejaSalida.cola[0].muestra[0].id=stoi(cola); 
-    pBuffer->bandejaSalida.cola[0].muestra[0].k=tipo; 
-    pBuffer->bandejaSalida.cola[0].muestra[0].cantidad=stoi(valor); 
+    pBuffer->bandejaSalida.cola[id-1].muestra[0].idCola=id;
+    pBuffer->bandejaSalida.cola[id-1].muestra[1].id=stoi(cola); 
+    pBuffer->bandejaSalida.cola[id-1].muestra[2].k=c; 
+    pBuffer->bandejaSalida.cola[id-1].muestra[3].cantidad=stoi(valor); 
   } else {
-    pBuffer->bandejaSalida.cola[0].muestra[0].idCola=id;
-    pBuffer->bandejaSalida.cola[0].muestra[0].id=stoi(cola); 
-    pBuffer->bandejaSalida.cola[0].muestra[0].k=tipo; 
-    pBuffer->bandejaSalida.cola[0].muestra[0].cantidad=stoi(valor); 
+    pBuffer->bandejaSalida.cola[id-1].muestra[0].idCola=id;
+    pBuffer->bandejaSalida.cola[id-1].muestra[1].id=stoi(cola); 
+    pBuffer->bandejaSalida.cola[id-1].muestra[2].k=c; 
+    pBuffer->bandejaSalida.cola[id-1].muestra[3].cantidad=stoi(valor); 
   }
 
 }
@@ -427,7 +434,7 @@ main(int argc , char* argv[]){
             ++id;
             cout << "id:" << id << endl;
             i = 0;
-            //agregarColaEntrada(id,cola,tipo,cantidad,memComp);
+            agregarColaEntrada(id,cola,tipo,cantidad,memComp);
           }
         } else {
           int idFicheros;
@@ -485,7 +492,7 @@ main(int argc , char* argv[]){
                     tipoFichero=contenido[1];
                     cantidadFichero=contenido[2];
                     cout << memComp << endl;
-                    //agregarColaEntrada(aux,colaFichero,tipoFichero,cantidadFichero,memComp);        
+                    agregarColaEntrada(aux,colaFichero,tipoFichero,cantidadFichero,memComp);        
                     j=0;
                   }
               }            }
@@ -501,6 +508,7 @@ main(int argc , char* argv[]){
         string command[3];
         string linea;
         int i=0;
+        int num=0;
         if( (argc>2) && (std::string (argv[2]) == "-n")){
           nombreMemoriaCompartida = argv[3];
           memComp = "/"+nombreMemoriaCompartida;
@@ -514,8 +522,9 @@ main(int argc , char* argv[]){
             command[2]="0";
             while (ssin.good()){
                 ssin >> command[i];
-                ++i;
+                ++i;   
             }
+          
             if(command[0] == "list"){
               if(command[1] == "reactive"){
                 mostrar("reactive", memComp);
