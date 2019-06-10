@@ -1,27 +1,4 @@
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <iostream>
-#include <cstdlib>
-#include <cstring>
-#include <string>
-#include <semaphore.h>
-#include <cerrno>
 #include "elementos.h"
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <pthread.h>
-#include <sstream>
-#include <fstream>
-
-
-//TODO: PROBAR EN EL PRODUCTOR CONSUMIDOR YA DECLARANDO LOS VALORES DEL BUFFER, INCREMENTAR EL VALOR DESDE OTRA FUNCION A VER SI FUNCIONA
-//cout << Header.entradasEntra <<endl;
-//cout << Header.entradasEntra + 7 <<endl;
-
-
-//HACER UN FICHERO DE PRUEBA PARA LA RECEPCION DE VARIOS FICHEROS
 
 using namespace std;
 
@@ -44,9 +21,13 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
     exit(1);
   }
 
+  //sem_init(sem, 1, 1);
+
   int tamanoTotal = (sizeof(struct BandejasEntrada)*iInit*ieInit +  
                      sizeof(struct BandejaSalida)*qInit +
-                     sizeof(struct Tipo)
+                     sizeof(struct Tipo) +
+                     sizeof(sem_t)*iInit*3 +
+                     sizeof(sem_t)*3
                     );
 
   if (ftruncate(fd, tamanoTotal) != 0) {
@@ -56,7 +37,6 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
   }
 
   //--------------------------------------------------------------------------------------------------------------------//
-  //aca se hace el mapeo de las bandejas
   //Mapeo
   void *dir;
 
@@ -71,35 +51,16 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
 
   //--------------------------------------------------------------------------------------------------------------------//
   struct Buffer *pBuffer = (struct Buffer *)dir;
-  pBuffer->bandejaEntrada.entradasEntra=iInit; //-i
-  pBuffer->bandejaEntrada.tamanoColasExternas=ieInit; //-ie 
-  pBuffer->bandejaEntrada.entradasSalida=oeInit; //-oe
-  pBuffer->bandejaEntrada.tamanoColasInternas=qInit; //-q
+  pBuffer->bandejaEntrada.cola[0].simulador.entra=0; //-i
+  pBuffer->bandejaEntrada.cola[0].simulador.sale=0; //-i
+  pBuffer->bandejaEntrada.cola[0].simulador.cantidad=0; //-i
+  pBuffer->bandejaSalida.cola[0].simulador.entra=0; 
+  pBuffer->bandejaSalida.cola[0].simulador.sale=0;
+  pBuffer->bandejaSalida.cola[0].simulador.cantidad=0;
   pBuffer->tipo.b=bInit;
   pBuffer->tipo.d=dInit;
   pBuffer->tipo.s=sInit;
-  cout << "tipob:"<< pBuffer->tipo.b << endl;
-  cout << "tipod:"<< pBuffer->tipo.d << endl;
-  cout << "tipos:"<< pBuffer->tipo.s << endl;
-  //pBuffer->bandejaSalida[pBuffer->entra].entra=0;
-  //pBuffer->bandejaSalida[pBuffer->entra].sale=0;
-  //pBuffer->bandejaSalida[pBuffer->entra].cantidad=0;
-  //pBuffer->muestra[pBuffer->entra].id=0;
-  //pBuffer->muestra[pBuffer->entra].k=0;
-  //pBuffer->muestra[pBuffer->entra].cantidad=0;
-
   // //--------------------------------------------------------------------------------------------------------------------//
-
-  //--------------------------------------------------------------------------------------------------------------------//
-  //Header *h = mmap()..;
-  //Particionando bandeja entrada
-  //int i;
-  //BandejaEntrada **ban = new BandejaEntrada[];
-  //ban[0] = (BandejaEntrada)(( (char *) n)+ sizeof(header));
-  //for(int nb=1; nb<i; ++i){
-  //  ban[nb]=(ban[nb-1])+sizeof(BandejaEntrada)* header ->ie;
-  //}
-  //--------------------------------------------------------------------------------------------------------------------//
 
   //--------------------------------------------------------------------------------------------------------------------//
   //Crear multiples semaforos:
@@ -122,12 +83,10 @@ initMemoriaCompartidaEntrada(int iInit, int ieInit, int oeInit, int bInit, int d
   //  }
   //}
   //--------------------------------------------------------------------------------------------------------------------//
-
+  
   //hilosMultiples();
   //hilosInternos();
-
   close(fd);
-
   return EXIT_SUCCESS;
 }
 
@@ -174,6 +133,16 @@ void evaluar(int tamanoColasInternas){
 }
 
 void mostrar(string queMuestro, string memoria){
+  char res;
+  int ran;
+  ran = rand() % ((51-14)+1) + 1;
+  if(res >= 50){
+    res = 'P';
+  } else if(res <= 15){
+     res = '?';
+  } else{
+    res = 'N';
+  }
   int fd = shm_open(memComp.c_str(), O_RDWR, 0660);
 
   if (fd < 0) {
@@ -191,15 +160,33 @@ void mostrar(string queMuestro, string memoria){
 	 << errno << strerror(errno) << endl;
     exit(1);
   }
+
   struct Buffer *pBuffer = (struct Buffer *)dir;
+  
   if(queMuestro == "reactive"){
     cout << "B: " << pBuffer->tipo.b
          << "\nD: " << pBuffer->tipo.d
          << "\nS: " << pBuffer->tipo.s << endl;
   }
-  if(queMuestro == "processing"){}
-  if(queMuestro == "waiting"){}
-  if(queMuestro == "reported"){}
+  if(queMuestro == "processing"){
+    //[id i k q p NL]
+  }
+  if(queMuestro == "waiting"){
+    //[id i k q NL]
+    cout << "id: "  <<  pBuffer->bandejaEntrada.cola[0].muestra[0].idCola
+         << "\ni (cola entrada); " << pBuffer->bandejaEntrada.cola[0].muestra[0].id
+         << "\nk (tipo muestra); " << pBuffer->bandejaEntrada.cola[0].muestra[0].k
+         << "\nq (cantidad de muestra)" << pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad
+         << endl;
+  }
+  if(queMuestro == "reported"){
+    //[id i k r NL]
+    cout << "id: "   << pBuffer->bandejaEntrada.cola[0].muestra[0].idCola
+         << "\ni (cola entrada); " << pBuffer->bandejaEntrada.cola[0].muestra[0].id
+         << "\nk (tipo muestra); " << pBuffer->bandejaEntrada.cola[0].muestra[0].k
+         << "\nr (resultado  de la muestra P,N,?)" << res
+         << endl;
+  }
 }
 
 void actualizar(string tipo, string valor, string memComp){
@@ -213,7 +200,6 @@ void actualizar(string tipo, string valor, string memComp){
 
   void *dir;
 
-  //Mapeo TIPOS
   if ((dir = mmap(NULL, (sizeof(struct Tipo)), PROT_READ | PROT_WRITE, MAP_SHARED,
   		  fd, 0)) == MAP_FAILED) {
     cerr << "Error mapeando la memoria compartida HEADER: "
@@ -236,6 +222,7 @@ void actualizar(string tipo, string valor, string memComp){
 }
 
 int procesarExamenes(string tipo,string memoria){
+  sem_t *sem = sem_open(semName, 0);
   int res;
   if(tipo == "B"){
     res = rand() % ((7-1) +1) + 1;
@@ -249,14 +236,107 @@ int procesarExamenes(string tipo,string memoria){
   return res;
 }
 
-void procesando(){}
+char resultadosExamenes(string tipo, string memoria){
+  char res;
+  int ran;
+  ran = rand() % ((51-14)+1) + 1;
+  if(res >= 50){
+    res = 'P';
+  } else if(res <= 15){
+     res = '?';
+  } else{
+    res = 'N';
+  }
+  return res;
+}
 
-void esperando(){}
+//waiting
+void agregarColaEntrada(int id, string cola, string tipo, string valor, string memComp){
+  int fd = shm_open(memComp.c_str(), O_RDWR, 0660);
 
-void reportados(){}
+  if (fd < 0) {
+    cerr << "Error creando la memoria compartida: "
+	       << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  void *dir;
+
+  //Mapeo TIPOS
+  if ((dir = mmap(NULL, (sizeof(struct Tipo)), PROT_READ | PROT_WRITE, MAP_SHARED,
+  		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida HEADER: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  struct Buffer *pBuffer = (struct Buffer *)dir;
+
+  if(tipo == "B"){
+    pBuffer->bandejaEntrada.cola[0].muestra[0].idCola=id;
+    pBuffer->bandejaEntrada.cola[0].muestra[0].id=stoi(cola); 
+    pBuffer->bandejaEntrada.cola[0].muestra[0].k=tipo; 
+    pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad=stoi(valor); 
+  } else if (tipo == "D"){
+    pBuffer->bandejaEntrada.cola[0].muestra[0].idCola=id;
+    pBuffer->bandejaEntrada.cola[0].muestra[0].id=stoi(cola); 
+    pBuffer->bandejaEntrada.cola[0].muestra[0].k=tipo; 
+    pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad=stoi(valor); 
+  } else {
+    pBuffer->bandejaEntrada.cola[0].muestra[0].idCola=id;
+    pBuffer->bandejaEntrada.cola[0].muestra[0].id=stoi(cola); 
+    pBuffer->bandejaEntrada.cola[0].muestra[0].k=tipo; 
+    pBuffer->bandejaEntrada.cola[0].muestra[0].cantidad=stoi(valor); 
+  }
+
+}
+
+//reported
+void agregarColaSalida(int id,string cola, string tipo, string valor, string memComp){
+  int fd = shm_open(memComp.c_str(), O_RDWR, 0660);
+
+  if (fd < 0) {
+    cerr << "Error creando la memoria compartida: "
+	       << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  void *dir;
+
+  //Mapeo TIPOS
+  if ((dir = mmap(NULL, (sizeof(struct Tipo)), PROT_READ | PROT_WRITE, MAP_SHARED,
+  		  fd, 0)) == MAP_FAILED) {
+    cerr << "Error mapeando la memoria compartida HEADER: "
+	 << errno << strerror(errno) << endl;
+    exit(1);
+  }
+
+  struct Buffer *pBuffer = (struct Buffer *)dir; 
+
+  //en la cola agregar...}
+
+  if(tipo == "B"){
+    pBuffer->bandejaSalida.cola[0].muestra[0].idCola=id;
+    pBuffer->bandejaSalida.cola[0].muestra[0].id=stoi(cola); 
+    pBuffer->bandejaSalida.cola[0].muestra[0].k=tipo; 
+    pBuffer->bandejaSalida.cola[0].muestra[0].cantidad=stoi(valor); 
+  } else if (tipo == "D"){
+    pBuffer->bandejaSalida.cola[0].muestra[0].idCola=id;
+    pBuffer->bandejaSalida.cola[0].muestra[0].id=stoi(cola); 
+    pBuffer->bandejaSalida.cola[0].muestra[0].k=tipo; 
+    pBuffer->bandejaSalida.cola[0].muestra[0].cantidad=stoi(valor); 
+  } else {
+    pBuffer->bandejaSalida.cola[0].muestra[0].idCola=id;
+    pBuffer->bandejaSalida.cola[0].muestra[0].id=stoi(cola); 
+    pBuffer->bandejaSalida.cola[0].muestra[0].k=tipo; 
+    pBuffer->bandejaSalida.cola[0].muestra[0].cantidad=stoi(valor); 
+  }
+
+}
 
 int
 deleteMemoriaCOmpartida(void) {
+  cout << "Borrando la memoria compartida: " << memComp << endl;
   sem_unlink("vacios");
   sem_unlink("llenos");
   sem_unlink("mutex");
@@ -276,13 +356,10 @@ static void usage (const char* progname){
 
 int
 main(int argc , char* argv[]){
-  //cout << Header.entradasEntra <<endl;
-  //cout << Header.entradasEntra + 7 <<endl;
     if(argc < 2){
       cout << "Please use one of the following commands:"<< endl;
       usage(argv[0]);
     }
-
     std::string arg1(argv[1]);
     if (arg1 == "init"){
       int ii = 5;
@@ -297,6 +374,9 @@ main(int argc , char* argv[]){
             nombreMemoriaCompartida = argv[i+1];
             memComp = "/"+nombreMemoriaCompartida;
           }
+          if((ii || ie || q || oe || d || s || b) < 0){
+            cerr << "Porfavor ingresar valores positivos" << endl;
+          }
           //TODO: poner bien los valores de cada variable
           //int i = (int)argv[i];
           if(std::string (argv[i]) == "-i"){ ii = atoi(argv[i+1]);  }
@@ -307,14 +387,24 @@ main(int argc , char* argv[]){
           if(std::string (argv[i]) == "-s"){ s = atoi(argv[i+1]);  }
           if(std::string (argv[i]) == "-q"){ q = atoi(argv[i+1]);  }
         }
-        cout << "i:" << ii << endl;
+        cout << "Numero de entradas:" << ii << endl;
+        cout << "Posiciones cola entrada:" << ie << endl;
+        cout << "Entradas colas de salida:" << oe << endl;
+        cout << "Nombre memoria compartida:" << memComp << endl;
+        cout << "Sangre:" << b << endl;
+        cout << "Ditritos:" << d << endl;
+        cout << "Piel:" << s << endl;
+        cout << "Tamano colas internas:" << s << endl;
         initMemoriaCompartidaEntrada(ii,ie,oe,b,d,s,q);
     }
 
     if(arg1 == "reg"){ //registrar examenes
-    //TODO: hay que agregar el condicional para el -n
         if (argv[2] == NULL)
             cout << "ERRRRRRRROR PS" << endl;
+        if( (argc>2) && (std::string (argv[2]) == "-n")){
+          nombreMemoriaCompartida = argv[3];
+          memComp = "/"+nombreMemoriaCompartida;
+        }     
         //MODO INTERACTIVO:
         if(std::string (argv[4]) == "-"){
           int id=0;
@@ -337,6 +427,7 @@ main(int argc , char* argv[]){
             ++id;
             cout << "id:" << id << endl;
             i = 0;
+            //agregarColaEntrada(id,cola,tipo,cantidad,memComp);
           }
         } else {
           int idFicheros;
@@ -371,18 +462,33 @@ main(int argc , char* argv[]){
           ofstream outfile;
           outfile.open(ficheroSalida); 
           int j=0;
+          string colaFichero;
+          string tipoFichero;
+          string cantidadFichero;
+          int counter=0;
+          int aux;
           for(int y=0; y<argc-4; ++y){
               ifstream infile(files[y].c_str());
               while (!infile.eof()){
                   infile >> contenido[j];
-                  ++j;
-                  if (j%3 == 0){
-                    idFicheros = j;
+                  //cout << contenido[j] << endl;
+                  ++counter;
+                  if (counter%3 == 0){
+                    idFicheros = counter;
                     outfile << "id:" << idFicheros/3 << '\n';
                     ++idFicheros;
+                    aux=idFicheros/3;
                   }
-              }
-            }
+                  j++;
+                  if(j == 3){
+                    colaFichero=contenido[0];
+                    tipoFichero=contenido[1];
+                    cantidadFichero=contenido[2];
+                    cout << memComp << endl;
+                    //agregarColaEntrada(aux,colaFichero,tipoFichero,cantidadFichero,memComp);        
+                    j=0;
+                  }
+              }            }
             outfile.close();
             //----------------------------------------------------------------------------------//
         }
@@ -401,6 +507,7 @@ main(int argc , char* argv[]){
         }     
         cout << "> " << endl;
           while(getline(cin,linea)){
+            cout << "> " << endl;
             stringstream ssin(linea);
             command[0]="0";
             command[1]="0";
@@ -408,28 +515,22 @@ main(int argc , char* argv[]){
             while (ssin.good()){
                 ssin >> command[i];
                 ++i;
-                //cout << i << endl;
             }
-            //TODO: quitar los mostrar y hacer los cout de lo que se necesita
             if(command[0] == "list"){
-              //if(command[1] == "all"){
-              //  cout << " all" << endl;
-              //  i=0;
-              //}
               if(command[1] == "reactive"){
                 mostrar("reactive", memComp);
                 i=0;
               }
               if(command[1] == "reported"){
-                cout << "[id i k r] reported" << endl;
+                mostrar("reported", memComp);
                 i=0;
               }
               if(command[1] == "waiting"){
-                cout << "[id i k q] waiting" << endl;
+                mostrar("waiting", memComp);
                 i=0;
               }
               if(command[1] == "processing"){
-                cout << "[id i k q p] processing" << endl;
+                mostrar("processing", memComp);
                 i=0;
               }
             } 
@@ -463,12 +564,10 @@ main(int argc , char* argv[]){
             }
             cout << "-i [id i k r]" << endl;
         } else {
-          //-m 10 espero recibir el reporte de 10 muestras
-          //saca el reporte de la cola de salida
           cout << "-m [id i k r]" << endl;
         }
+        //reportarResultados();
       }
-      //reportarResultados();
     
     if (arg1 == "stop"){
       if( (argc>2) && (std::string (argv[2]) == "-n")){
